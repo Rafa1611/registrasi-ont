@@ -174,13 +174,14 @@ const Dashboard = ({ API }) => {
 
               {user?.permissions?.devices && (
                 <TabsContent value="devices" className="mt-6">
-                <DeviceManagement 
-                  API={API}
-                  devices={devices}
-                  onDeviceSelect={handleDeviceSelect}
-                  onDeviceUpdated={handleDeviceUpdated}
-                  selectedDevice={selectedDevice}
-                />
+                  <DeviceManagement 
+                    API={API}
+                    devices={devices}
+                    onDeviceSelect={handleDeviceSelect}
+                    onDeviceUpdated={handleDeviceUpdated}
+                    selectedDevice={selectedDevice}
+                  />
+                </TabsContent>
               )}
 
               {user?.permissions?.configuration && (
