@@ -19,7 +19,11 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
     frame: 0,
     board: 1,
     port: 3,
-    vlan: '41'
+    vlan: '41',
+    line_profile_id: 1,
+    service_profile_id: 1,
+    dba_profile_id: 1,
+    gemport: '1'
   });
 
   useEffect(() => {
@@ -46,7 +50,7 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: ['ont_id', 'frame', 'board', 'port'].includes(name) 
+      [name]: ['ont_id', 'frame', 'board', 'port', 'line_profile_id', 'service_profile_id', 'dba_profile_id'].includes(name) 
         ? parseInt(value) || 0 
         : value
     }));
@@ -70,7 +74,11 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
           frame: 0,
           board: 1,
           port: 3,
-          vlan: '41'
+          vlan: '41',
+          line_profile_id: 1,
+          service_profile_id: 1,
+          dba_profile_id: 1,
+          gemport: '1'
         });
         loadONTs();
       }
@@ -131,6 +139,32 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
+                  <Label>Line Profile</Label>
+                  <Input name="line_profile_id" type="number" value={formData.line_profile_id} onChange={handleInputChange} required className="bg-slate-700 border-slate-600 text-white" />
+                </div>
+                <div>
+                  <Label>Service Profile</Label>
+                  <Input name="service_profile_id" type="number" value={formData.service_profile_id} onChange={handleInputChange} required className="bg-slate-700 border-slate-600 text-white" />
+                </div>
+                <div>
+                  <Label>DBA Profile</Label>
+                  <Input name="dba_profile_id" type="number" value={formData.dba_profile_id} onChange={handleInputChange} required className="bg-slate-700 border-slate-600 text-white" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>GEM Port</Label>
+                  <Input name="gemport" value={formData.gemport} onChange={handleInputChange} placeholder="1 atau 1,2,3" required className="bg-slate-700 border-slate-600 text-white" />
+                  <p className="text-xs text-slate-400 mt-1">Comma-separated</p>
+                </div>
+                <div>
+                  <Label>VLAN (Single atau Multiple)</Label>
+                  <Input name="vlan" value={formData.vlan} onChange={handleInputChange} placeholder="41 atau 40,42,50" required className="bg-slate-700 border-slate-600 text-white" />
+                  <p className="text-xs text-slate-400 mt-1">Single: 41 | Multiple: 40,42,50</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
                   <Label>Frame</Label>
                   <Input name="frame" type="number" value={formData.frame} onChange={handleInputChange} required className="bg-slate-700 border-slate-600 text-white" />
                 </div>
@@ -142,11 +176,6 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
                   <Label>Port</Label>
                   <Input name="port" type="number" value={formData.port} onChange={handleInputChange} required className="bg-slate-700 border-slate-600 text-white" />
                 </div>
-              </div>
-              <div>
-                <Label>VLAN (Single atau Multiple)</Label>
-                <Input name="vlan" value={formData.vlan} onChange={handleInputChange} placeholder="41 atau 40,42,50" required className="bg-slate-700 border-slate-600 text-white" />
-                <p className="text-xs text-slate-400 mt-1">Single: 41 | Multiple: 40,42,50</p>
               </div>
               <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600">Register ONT</Button>
             </form>
