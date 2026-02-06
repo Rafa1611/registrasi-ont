@@ -12,6 +12,9 @@ import { toast } from 'sonner';
 
 const ONTManagement = ({ API, devices, selectedDevice }) => {
   const [onts, setOnts] = useState([]);
+  const [detectedOnts, setDetectedOnts] = useState([]);
+  const [isScanning, setIsScanning] = useState(false);
+  const [showDetected, setShowDetected] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     olt_device_id: '',
