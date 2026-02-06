@@ -1,0 +1,295 @@
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, Trash2, Activity } from 'lucide-react';
+import { toast } from 'sonner';
+
+const ONTManagement = ({ API, devices, selectedDevice }) => {
+  const [onts, setOnts] = useState([]);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    olt_device_id: '',
+    ont_id: 1,
+    serial_number: '',
+    frame: 0,
+    board: 1,
+    port: 3,
+    vlan: 41
+  });
+
+  useEffect(() => {
+    if (selectedDevice) {
+      loadONTs();
+      setFormData(prev => ({ ...prev, olt_device_id: selectedDevice.id }));
+    }
+  }, [selectedDevice]);
+
+  const loadONTs = async () => {
+    if (!selectedDevice) return;
+
+    try {
+      const response = await fetch(`${API}/ont/device/${selectedDevice.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setOnts(data);
+      }
+    } catch (error) {
+      console.error('Error loading ONTs:', error);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: ['ont_id', 'frame', 'board', 'port', 'vlan'].includes(name) 
+        ? parseInt(value) || 0 
+        : value
+    }));
+  };
+
+  const handleAddONT = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`${API}/ont`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        toast.success('ONT berhasil didaftarkan!');
+        setIsAddDialogOpen(false);
+        setFormData({
+          olt_device_id: selectedDevice.id,
+          ont_id: 1,
+          serial_number: '',
+          frame: 0,
+          board: 1,
+          port: 3,
+          vlan: 41
+        });
+        loadONTs();
+      } else {
+        toast.error('Gagal mendaftarkan ONT');
+      }
+    } catch (error) {
+      toast.error('Error: ' + error.message);
+    }
+  };
+
+  const handleDeleteONT = async (ontId) => {
+    if (!window.confirm('Apakah Anda yakin ingin menghapus ONT ini?')) return;
+
+    try {
+      const response = await fetch(`${API}/ont/${ontId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        toast.success('ONT berhasil dihapus!');
+        loadONTs();
+      } else {
+        toast.error('Gagal menghapus ONT');
+      }
+    } catch (error) {
+      toast.error('Error: ' + error.message);
+    }
+  };
+
+  if (!selectedDevice) {
+    return (
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardContent className="p-8 text-center">
+          <p className="text-slate-400">Pilih device terlebih dahulu untuk mengelola ONT</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-white">ONT Management</h2>
+          <p className="text-blue-200">Device: {selectedDevice.name}</p>
+        </div>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-500 hover:bg-blue-600" data-testid="add-ont-btn">
+              <Plus className="w-4 h-4 mr-2" />
+              Register ONT
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-slate-800 text-white border-slate-700">
+            <DialogHeader>
+              <DialogTitle>Register ONT Baru</DialogTitle>
+              <DialogDescription className="text-slate-400">
+                Daftarkan ONT baru ke OLT device
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleAddONT} className="space-y-4">
+              <div>
+                <Label htmlFor="ont_id">ONT ID</Label>
+                <Input
+                  id="ont_id"
+                  name="ont_id"
+                  type="number"
+                  value={formData.ont_id}
+                  onChange={handleInputChange}
+                  required
+                  className="bg-slate-700 border-slate-600 text-white"
+                  data-testid="ont-id-input"
+                />
+              </div>
+              <div>
+                <Label htmlFor="serial_number">Serial Number</Label>
+                <Input
+                  id="serial_number"
+                  name="serial_number"
+                  value={formData.serial_number}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="HWTC12345678"
+                  className="bg-slate-700 border-slate-600 text-white"
+                  data-testid="ont-serial-input"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="frame">Frame</Label>
+                  <Input
+                    id="frame"
+                    name="frame"
+                    type="number"
+                    value={formData.frame}
+                    onChange={handleInputChange}
+                    required
+                    className="bg-slate-700 border-slate-600 text-white"
+                    data-testid="ont-frame-input"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="board">Board</Label>
+                  <Input
+                    id="board"
+                    name="board"
+                    type="number"
+                    value={formData.board}
+                    onChange={handleInputChange}
+                    required
+                    className="bg-slate-700 border-slate-600 text-white"
+                    data-testid="ont-board-input"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="port">Port</Label>
+                  <Input
+                    id="port"
+                    name="port"
+                    type="number"
+                    value={formData.port}
+                    onChange={handleInputChange}
+                    required
+                    className="bg-slate-700 border-slate-600 text-white"
+                    data-testid="ont-port-input"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="vlan">VLAN</Label>
+                  <Input
+                    id="vlan"
+                    name="vlan"
+                    type="number"
+                    value={formData.vlan}
+                    onChange={handleInputChange}
+                    required
+                    className="bg-slate-700 border-slate-600 text-white"
+                    data-testid="ont-vlan-input"
+                  />
+                </div>
+              </div>
+              <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600" data-testid="submit-ont-btn">
+                Register ONT
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-white">Registered ONTs</CardTitle>
+          <CardDescription className="text-slate-400">
+            Total: {onts.length} ONT(s)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {onts.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              Belum ada ONT terdaftar
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-slate-700">
+                    <TableHead className="text-slate-300">ONT ID</TableHead>
+                    <TableHead className="text-slate-300">Serial Number</TableHead>
+                    <TableHead className="text-slate-300">Registration Code</TableHead>
+                    <TableHead className="text-slate-300">Frame/Board/Port</TableHead>
+                    <TableHead className="text-slate-300">VLAN</TableHead>
+                    <TableHead className="text-slate-300">Status</TableHead>
+                    <TableHead className="text-slate-300">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {onts.map((ont) => (
+                    <TableRow key={ont.id} className="border-slate-700" data-testid={`ont-row-${ont.id}`}>
+                      <TableCell className="text-white font-medium">{ont.ont_id}</TableCell>
+                      <TableCell className="text-slate-300 font-mono text-sm">{ont.serial_number}</TableCell>
+                      <TableCell className="text-slate-300 font-mono text-sm">{ont.registration_code}</TableCell>
+                      <TableCell className="text-slate-300">{ont.frame}/{ont.board}/{ont.port}</TableCell>
+                      <TableCell className="text-slate-300">{ont.vlan}</TableCell>
+                      <TableCell>
+                        <Badge 
+                          className={`${
+                            ont.status === 'online' ? 'bg-green-500' : 
+                            ont.status === 'offline' ? 'bg-red-500' : 
+                            'bg-yellow-500'
+                          }`}
+                        >
+                          <Activity className="w-3 h-3 mr-1" />
+                          {ont.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-red-600 text-red-500 hover:bg-red-500 hover:text-white"
+                          onClick={() => handleDeleteONT(ont.id)}
+                          data-testid={`delete-ont-btn-${ont.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default ONTManagement;
