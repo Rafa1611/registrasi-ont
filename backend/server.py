@@ -544,6 +544,158 @@ async def delete_ont(ont_id: str):
         raise HTTPException(status_code=404, detail="ONT not found")
     return {"message": "ONT deleted successfully"}
 
+# ==================== AUTO-DETECT ONT ====================
+
+class DetectedONT(BaseModel):
+    serial_number: str
+    frame: int
+    board: int
+    port: int
+    ont_id: int
+    detected_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+@api_router.post("/ont/detect/{device_id}")
+async def detect_unauthorized_onts(device_id: str):
+    """
+    Detect unauthorized ONTs that are connected but not registered yet.
+    This sends 'display ont autofind all' command to OLT.
+    """
+    device = await db.olt_devices.find_one({"id": device_id}, {"_id": 0})
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    if not telnet_manager.is_connected(device_id):
+        raise HTTPException(status_code=400, detail="Device not connected")
+    
+    try:
+        # Send command to detect unauthorized ONTs
+        success, status, response = await telnet_manager.send_command(
+            device_id, 
+            "display ont autofind all"
+        )
+        
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to detect ONTs")
+        
+        # Parse response to extract ONT information
+        # This is a simplified parser - actual parsing depends on OLT response format
+        detected_onts = []
+        lines = response.split('\n')
+        
+        for line in lines:
+            # Example line format: "0/1/3      1    HWTC12345678    ..."
+            # This parsing logic should be adjusted based on actual OLT response
+            parts = line.strip().split()
+            if len(parts) >= 3 and '/' in parts[0]:
+                try:
+                    fsp = parts[0].split('/')  # Frame/Slot/Port
+                    if len(fsp) == 3:
+                        detected_onts.append({
+                            "serial_number": parts[2] if len(parts) > 2 else "UNKNOWN",
+                            "frame": int(fsp[0]),
+                            "board": int(fsp[1]),
+                            "port": int(fsp[2]),
+                            "ont_id": int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0,
+                            "detected_at": datetime.now(timezone.utc).isoformat()
+                        })
+                except (ValueError, IndexError):
+                    continue
+        
+        return {
+            "success": True,
+            "device_id": device_id,
+            "detected_count": len(detected_onts),
+            "onts": detected_onts,
+            "raw_response": response
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error detecting ONTs: {str(e)}")
+
+@api_router.post("/ont/auto-register/{device_id}")
+async def auto_register_detected_ont(device_id: str, ont_data: Dict[str, Any]):
+    """
+    Auto-register a detected ONT.
+    Takes detected ONT info and registers it in the system.
+    """
+    device = await db.olt_devices.find_one({"id": device_id}, {"_id": 0})
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    config = await db.olt_configurations.find_one({"device_id": device_id})
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuration not found for device")
+    
+    # Generate registration code
+    registration_rule = config.get('registration_rule', '0-(B)-(P)-(O)')
+    registration_code = registration_rule.replace('(B)', str(ont_data['board'])).replace('(P)', str(ont_data['port'])).replace('(O)', str(ont_data['ont_id']))
+    
+    # Get service VLAN from config
+    vlan = config.get('service_inner_vlan', 41)
+    
+    # Create ONT entry
+    ont_dict = {
+        "olt_device_id": device_id,
+        "ont_id": ont_data['ont_id'],
+        "serial_number": ont_data['serial_number'],
+        "frame": ont_data['frame'],
+        "board": ont_data['board'],
+        "port": ont_data['port'],
+        "vlan": vlan,
+        "registration_code": registration_code
+    }
+    
+    ont_obj = ONTDevice(**ont_dict)
+    
+    doc = ont_obj.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    
+    # Check if ONT already exists
+    existing = await db.ont_devices.find_one({
+        "olt_device_id": device_id,
+        "serial_number": ont_data['serial_number']
+    })
+    
+    if existing:
+        return {
+            "success": False,
+            "message": "ONT already registered",
+            "ont": existing
+        }
+    
+    await db.ont_devices.insert_one(doc)
+    
+    # If device is connected, execute registration command on OLT
+    if telnet_manager.is_connected(device_id) and config.get('auto_registration', True):
+        try:
+            # Build registration command based on config
+            line_template = config.get('g_line_template', 1)
+            service_template = config.get('g_service_template', 1)
+            
+            register_cmd = f"ont add {ont_data['frame']}/{ont_data['board']}/{ont_data['port']} {ont_data['ont_id']} sn-auth \\\"{ont_data['serial_number']}\\\" omci ont-lineprofile-id {line_template} ont-srvprofile-id {service_template}"
+            
+            success, status, response = await telnet_manager.send_command(device_id, register_cmd)
+            
+            # Log the command
+            log_dict = {
+                "id": str(uuid.uuid4()),
+                "device_id": device_id,
+                "command": register_cmd,
+                "response": response,
+                "status": status,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+            await db.command_logs.insert_one(log_dict)
+            
+        except Exception as e:
+            print(f"Warning: Failed to execute registration command: {e}")
+    
+    return {
+        "success": True,
+        "message": "ONT auto-registered successfully",
+        "ont": ont_obj.model_dump()
+    }
+
 # ==================== COMMAND LOGS ====================
 
 @api_router.get("/logs/{device_id}")
