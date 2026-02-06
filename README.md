@@ -326,6 +326,16 @@ GET    /api/config/export/{device_id} - Export config
 
 ## 🔧 Troubleshooting
 
+### Installation Error: emergentintegrations not found
+**Error:** `ERROR: No matching distribution found for emergentintegrations==0.1.0`
+
+**Solusi:** File sudah diperbaiki! Pull versi terbaru atau lihat [FIX_INSTALLATION_ERROR.md](./FIX_INSTALLATION_ERROR.md)
+
+```bash
+git pull origin main  # Get latest version
+./install.sh          # Run installation again
+```
+
 ### Backend tidak start
 ```bash
 # Check logs
