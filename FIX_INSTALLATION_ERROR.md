@@ -1,19 +1,70 @@
-# 🔧 Fix: emergentintegrations Installation Error
+# 🔧 Fix: Installation Errors
 
-## ❌ Problem
+## Common Installation Errors & Solutions
 
-Saat menjalankan `install.sh`, muncul error:
+---
+
+## ❌ Error 1: emergentintegrations Not Found
+
+### Problem
 ```
 ERROR: Could not find a version that satisfies the requirement emergentintegrations==0.1.0
 ERROR: No matching distribution found for emergentintegrations==0.1.0
 Error: Failed to install Python dependencies
 ```
 
-## ✅ Solution
+### ✅ Solution
+File `requirements.txt` sudah diperbaiki! Clone repository terbaru.
 
-File `requirements.txt` yang lama berisi package `emergentintegrations` yang **tidak tersedia di public PyPI** dan **tidak dibutuhkan** oleh aplikasi ini.
+```bash
+cd ~
+git clone https://github.com/Rafa1611/registrasi-ont.git
+cd registrasi-ont
+./install.sh
+```
 
-File sudah diperbaiki! Silakan coba lagi.
+---
+
+## ❌ Error 2: Node.js Version Incompatible
+
+### Problem
+```
+error react-router-dom@7.13.0: The engine "node" is incompatible with this module. 
+Expected version ">=20.0.0". Got "18.20.8"
+Error: Failed to install frontend dependencies
+```
+
+### ✅ Solution
+Upgrade Node.js ke version 20 LTS:
+
+```bash
+# Remove old Node.js repository
+sudo rm -f /etc/apt/sources.list.d/nodesource.list
+
+# Install Node.js 20.x LTS
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt update
+sudo apt install -y nodejs
+
+# Verify version (should be >= 20.0.0)
+node --version
+
+# Update yarn
+sudo npm install -g yarn
+
+# Now run install script again
+cd ~/registrasi-ont
+./install.sh
+```
+
+**One-liner:**
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt install -y nodejs && sudo npm install -g yarn
+```
+
+---
+
+## ❌ Error 3: MongoDB Connection Failed
 
 ---
 
