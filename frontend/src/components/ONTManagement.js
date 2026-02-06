@@ -8,8 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Trash2, Activity, Search, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '../contexts/AuthContext';
+import { apiRequest } from '../utils/api';
 
 const ONTManagement = ({ API, devices, selectedDevice }) => {
+  const { user, hasPermission } = useAuth();
   const [onts, setOnts] = useState([]);
   const [detectedOnts, setDetectedOnts] = useState([]);
   const [isScanning, setIsScanning] = useState(false);
