@@ -586,9 +586,15 @@ async def create_ont(input: ONTDeviceCreate):
                 cmd += f" desc \\\"{input.description}\\\""
             await telnet_manager.send_command(device_id, cmd)
             
-            # Create service ports
-            for gp in input.gemport.split(','):
-                sp_cmd = f"service-port vlan {input.vlan} gpon {input.frame}/{input.board}/{input.port} ont {ont_id} gemport {gp.strip()} multi-service user-vlan {input.vlan}"
+            # Get next service-port index from database
+            # Count existing service ports to determine next index
+            existing_ports = await db.ont_devices.count_documents({})
+            service_port_index = existing_ports + 1
+            
+            # Create service ports with proper format
+            for idx, gp in enumerate(input.gemport.split(',')):
+                sp_idx = service_port_index + idx
+                sp_cmd = f"service-port {sp_idx} vlan {input.vlan} gpon {input.frame}/{input.board}/{input.port} ont {ont_id} gemport {gp.strip()} multi-service user-vlan {input.vlan} tag-transform translate"
                 await telnet_manager.send_command(device_id, sp_cmd)
         except Exception as e:
             print(f"Registration command failed: {e}")
