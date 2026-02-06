@@ -319,8 +319,72 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
                     className="bg-slate-700 border-slate-600 text-white"
                     data-testid="ont-serial-input"
                   />
+                  <p className="text-xs text-slate-400 mt-1">Format: HWTC + 8 digits</p>
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="line_profile_id">Line Profile ID</Label>
+                    <Input
+                      id="line_profile_id"
+                      name="line_profile_id"
+                      type="number"
+                      value={formData.line_profile_id}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="ont-line-profile-input"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">ont-lineprofile-id</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="service_profile_id">Service Profile ID</Label>
+                    <Input
+                      id="service_profile_id"
+                      name="service_profile_id"
+                      type="number"
+                      value={formData.service_profile_id}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="ont-service-profile-input"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">ont-srvprofile-id</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="gemport">GEM Port</Label>
+                    <Input
+                      id="gemport"
+                      name="gemport"
+                      value={formData.gemport}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="1,2,3"
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="ont-gemport-input"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">Comma-separated (e.g., 1 or 1,2,3)</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="vlan">User VLAN</Label>
+                    <Input
+                      id="vlan"
+                      name="vlan"
+                      type="number"
+                      value={formData.vlan}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="ont-vlan-input"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">Service VLAN ID</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="frame">Frame</Label>
                     <Input
