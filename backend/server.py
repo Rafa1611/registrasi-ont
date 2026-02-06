@@ -666,6 +666,43 @@ async def detect_unauthorized_onts(device_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error detecting ONTs: {str(e)}")
 
+@api_router.post("/ont/simulate-detect/{device_id}")
+async def simulate_detect_onts(device_id: str):
+    """
+    DEMO/TESTING: Simulate detecting unauthorized ONTs.
+    Returns fake ONT data for demonstration purposes.
+    """
+    device = await db.olt_devices.find_one({"id": device_id}, {"_id": 0})
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    # Generate 3-5 fake detected ONTs
+    import random
+    num_onts = random.randint(3, 5)
+    
+    detected_onts = []
+    base_serial = "HWTC"
+    
+    for i in range(num_onts):
+        serial_suffix = ''.join([str(random.randint(0, 9)) for _ in range(8)])
+        detected_onts.append({
+            "serial_number": f"{base_serial}{serial_suffix}",
+            "frame": 0,
+            "board": 1,
+            "port": random.choice([1, 2, 3, 4, 5]),
+            "ont_id": i,
+            "detected_at": datetime.now(timezone.utc).isoformat()
+        })
+    
+    return {
+        "success": True,
+        "device_id": device_id,
+        "detected_count": len(detected_onts),
+        "onts": detected_onts,
+        "simulation": True,
+        "message": "⚠️ SIMULASI - Data ONT ini hanya untuk demo/testing"
+    }
+
 @api_router.post("/ont/auto-register/{device_id}")
 async def auto_register_detected_ont(device_id: str, ont_data: Dict[str, Any]):
     """
