@@ -1105,8 +1105,13 @@ async def auto_register_detected_ont(device_id: str, ont_data: Dict[str, Any], c
         "frame": ont_data['frame'],
         "board": ont_data['board'],
         "port": ont_data['port'],
-        "vlan": vlan,
-        "registration_code": registration_code
+        "vlan": ont_data.get('vlan', str(vlan)),
+        "line_profile_id": ont_data.get('line_profile_id', 1),
+        "service_profile_id": ont_data.get('service_profile_id', 1),
+        "gemport": ont_data.get('gemport', '1'),
+        "description": ont_data.get('description', ''),
+        "registration_code": registration_code,
+        "registered_by": current_user.full_name  # Auto-fill from logged user
     }
     
     ont_obj = ONTDevice(**ont_dict)
