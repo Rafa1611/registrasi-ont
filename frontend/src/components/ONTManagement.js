@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Trash2, Activity, Search, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -103,13 +104,16 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
         setIsAddDialogOpen(false);
         setFormData({
           olt_device_id: selectedDevice.id,
-          ont_id: 1,
+          ont_id: autoOntId ? -1 : 0,
           serial_number: '',
           frame: 0,
           board: 1,
           port: 3,
           vlan: 41
         });
+        if (autoOntId) {
+          fetchNextOntId();
+        }
         loadONTs();
       } else {
         toast.error('Gagal mendaftarkan ONT');
@@ -239,6 +243,49 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleAddONT} className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-blue-900/30 rounded-lg border border-blue-500">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="auto-ont-id" className="text-blue-200 cursor-pointer">
+                      Auto ONT ID
+                    </Label>
+                    {autoOntId && (
+                      <Badge className="bg-blue-500">
+                        Next: {nextOntId}
+                      </Badge>
+                    )}
+                  </div>
+                  <Switch
+                    id="auto-ont-id"
+                    checked={autoOntId}
+                    onCheckedChange={(checked) => {
+                      setAutoOntId(checked);
+                      if (checked) {
+                        setFormData(prev => ({ ...prev, ont_id: -1 }));
+                        fetchNextOntId();
+                      } else {
+                        setFormData(prev => ({ ...prev, ont_id: 0 }));
+                      }
+                    }}
+                  />
+                </div>
+                
+                {!autoOntId && (
+                  <div>
+                    <Label htmlFor="ont_id">ONT ID (Manual)</Label>
+                    <Input
+                      id="ont_id"
+                      name="ont_id"
+                      type="number"
+                      value={formData.ont_id}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="ont-id-input"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">GPON: 0-127, EPON: 0-63</p>
+                  </div>
+                )}
+                
                 <div>
                   <Label htmlFor="ont_id">ONT ID</Label>
                   <Input
