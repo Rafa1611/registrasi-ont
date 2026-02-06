@@ -76,8 +76,14 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
         body: JSON.stringify(formData)
       });
       if (response.ok) {
+        const data = await response.json();
         toast.success('ONT berhasil didaftarkan!');
         setIsAddDialogOpen(false);
+        
+        // Show registration result
+        setRegistrationResult(data);
+        setIsResultDialogOpen(true);
+        
         setFormData({
           olt_device_id: selectedDevice.id,
           ont_id: 0,
