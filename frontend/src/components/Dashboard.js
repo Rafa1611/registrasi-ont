@@ -60,12 +60,10 @@ const Dashboard = ({ API }) => {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-500 rounded-lg">
-                <Wifi className="w-8 h-8 text-white" />
-              </div>
+              <img src="/logo.png" alt="Rafa Hotspot Logo" className="h-16 w-16" />
               <div>
-                <h1 className="text-4xl font-bold text-white">Huawei OLT Management System</h1>
-                <p className="text-blue-200 text-lg">Comprehensive GPON/EPON Management Platform</p>
+                <h1 className="text-4xl font-bold text-white">Rafa Hotspot</h1>
+                <p className="text-blue-200 text-lg">ONT Registration Management System</p>
               </div>
             </div>
             
