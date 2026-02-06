@@ -46,7 +46,7 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
   const loadONTs = async () => {
     if (!selectedDevice) return;
     try {
-      const response = await fetch(`${API}/ont/device/${selectedDevice.id}`);
+      const response = await apiRequest(`${API}/ont/device/${selectedDevice.id}`);
       if (response.ok) {
         const data = await response.json();
         setOnts(data);
@@ -69,9 +69,8 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
   const handleAddONT = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${API}/ont`, {
+      const response = await apiRequest(`${API}/ont`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
       if (response.ok) {
