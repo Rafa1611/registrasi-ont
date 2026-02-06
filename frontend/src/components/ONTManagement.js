@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Trash2, Activity, Search, RefreshCw } from 'lucide-react';
@@ -146,7 +145,6 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
       
       if (data.success) {
         toast.success('ONT berhasil didaftarkan otomatis!');
-        // Remove from detected list
         setDetectedOnts(prev => prev.filter(ont => ont.serial_number !== detectedOnt.serial_number));
         loadONTs();
       } else {
@@ -200,103 +198,103 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
                 Register ONT
               </Button>
             </DialogTrigger>
-          <DialogContent className="bg-slate-800 text-white border-slate-700">
-            <DialogHeader>
-              <DialogTitle>Register ONT Baru</DialogTitle>
-              <DialogDescription className="text-slate-400">
-                Daftarkan ONT baru ke OLT device
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleAddONT} className="space-y-4">
-              <div>
-                <Label htmlFor="ont_id">ONT ID</Label>
-                <Input
-                  id="ont_id"
-                  name="ont_id"
-                  type="number"
-                  value={formData.ont_id}
-                  onChange={handleInputChange}
-                  required
-                  className="bg-slate-700 border-slate-600 text-white"
-                  data-testid="ont-id-input"
-                />
-              </div>
-              <div>
-                <Label htmlFor="serial_number">Serial Number</Label>
-                <Input
-                  id="serial_number"
-                  name="serial_number"
-                  value={formData.serial_number}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="HWTC12345678"
-                  className="bg-slate-700 border-slate-600 text-white"
-                  data-testid="ont-serial-input"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+            <DialogContent className="bg-slate-800 text-white border-slate-700">
+              <DialogHeader>
+                <DialogTitle>Register ONT Baru</DialogTitle>
+                <DialogDescription className="text-slate-400">
+                  Daftarkan ONT baru ke OLT device
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAddONT} className="space-y-4">
                 <div>
-                  <Label htmlFor="frame">Frame</Label>
+                  <Label htmlFor="ont_id">ONT ID</Label>
                   <Input
-                    id="frame"
-                    name="frame"
+                    id="ont_id"
+                    name="ont_id"
                     type="number"
-                    value={formData.frame}
+                    value={formData.ont_id}
                     onChange={handleInputChange}
                     required
                     className="bg-slate-700 border-slate-600 text-white"
-                    data-testid="ont-frame-input"
+                    data-testid="ont-id-input"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="board">Board</Label>
+                  <Label htmlFor="serial_number">Serial Number</Label>
                   <Input
-                    id="board"
-                    name="board"
-                    type="number"
-                    value={formData.board}
+                    id="serial_number"
+                    name="serial_number"
+                    value={formData.serial_number}
                     onChange={handleInputChange}
                     required
+                    placeholder="HWTC12345678"
                     className="bg-slate-700 border-slate-600 text-white"
-                    data-testid="ont-board-input"
+                    data-testid="ont-serial-input"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="port">Port</Label>
-                  <Input
-                    id="port"
-                    name="port"
-                    type="number"
-                    value={formData.port}
-                    onChange={handleInputChange}
-                    required
-                    className="bg-slate-700 border-slate-600 text-white"
-                    data-testid="ont-port-input"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="frame">Frame</Label>
+                    <Input
+                      id="frame"
+                      name="frame"
+                      type="number"
+                      value={formData.frame}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="ont-frame-input"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="board">Board</Label>
+                    <Input
+                      id="board"
+                      name="board"
+                      type="number"
+                      value={formData.board}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="ont-board-input"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="port">Port</Label>
+                    <Input
+                      id="port"
+                      name="port"
+                      type="number"
+                      value={formData.port}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="ont-port-input"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="vlan">VLAN</Label>
+                    <Input
+                      id="vlan"
+                      name="vlan"
+                      type="number"
+                      value={formData.vlan}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="ont-vlan-input"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="vlan">VLAN</Label>
-                  <Input
-                    id="vlan"
-                    name="vlan"
-                    type="number"
-                    value={formData.vlan}
-                    onChange={handleInputChange}
-                    required
-                    className="bg-slate-700 border-slate-600 text-white"
-                    data-testid="ont-vlan-input"
-                  />
-                </div>
-              </div>
-              <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600" data-testid="submit-ont-btn">
-                Register ONT
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600" data-testid="submit-ont-btn">
+                  Register ONT
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      {/* Detected ONTs Section */}
       {showDetected && detectedOnts.length > 0 && (
         <Card className="bg-green-900/30 border-green-500">
           <CardHeader>
