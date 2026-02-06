@@ -215,7 +215,7 @@ const Dashboard = ({ API }) => {
 
               {user?.permissions?.user_management && (
                 <TabsContent value="users" className="mt-6">
-                  <div className="text-white">User Management (Coming soon...)</div>
+                  <UserManagement API={API} />
                 </TabsContent>
               )}
             </Tabs>
