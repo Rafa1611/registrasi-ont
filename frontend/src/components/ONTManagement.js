@@ -164,14 +164,18 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
         vlan: '41'
       };
       
-      const response = await fetch(`${API}/ont/auto-register/${selectedDevice.id}`, {
+      const response = await apiRequest(`${API}/ont/auto-register/${selectedDevice.id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
       const data = await response.json();
       if (data.success) {
         toast.success('ONT berhasil didaftarkan!');
+        
+        // Show registration result
+        setRegistrationResult(data.ont);
+        setIsResultDialogOpen(true);
+        
         setDetectedOnts(prev => prev.filter(ont => ont.serial_number !== selectedOntForDesc.serial_number));
         loadONTs();
         setIsDescDialogOpen(false);
