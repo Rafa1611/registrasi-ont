@@ -590,9 +590,8 @@ async def create_ont(input: ONTDeviceCreate):
                 cmd += f" desc \\\"{input.description}\\\""
             await telnet_manager.send_command(device_id, cmd)
             
-            # Apply DBA Profile
-            dba_cmd = f"ont dba-profile {input.frame}/{input.board}/{input.port} {ont_id} profile-id {input.dba_profile_id}"
-            await telnet_manager.send_command(device_id, dba_cmd)
+            # Note: DBA Profile sudah included dalam Line Profile
+            # Tidak perlu execute "ont dba-profile" terpisah
             
             # Get service-port index
             if input.service_port_index == -1:
