@@ -427,6 +427,187 @@ telnet_manager = TelnetConnection()
 async def root():
     return {"message": "Huawei OLT Management System API", "version": "1.0.0"}
 
+# ==================== AUTHENTICATION ====================
+
+@api_router.post("/auth/login", response_model=Token)
+async def login(credentials: UserLogin):
+    """Login endpoint"""
+    user = await db.users.find_one({"username": credentials.username}, {"_id": 0})
+    
+    if not user or not verify_password(credentials.password, user['password_hash']):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password"
+        )
+    
+    if not user.get('is_active', True):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account is disabled"
+        )
+    
+    # Create access token
+    access_token = create_access_token(data={"sub": user['username']})
+    
+    # Prepare user response
+    user_response = UserResponse(
+        id=user['id'],
+        username=user['username'],
+        full_name=user['full_name'],
+        role=user['role'],
+        permissions=user.get('permissions', {}),
+        is_active=user.get('is_active', True),
+        created_at=user['created_at']
+    )
+    
+    return Token(access_token=access_token, token_type="bearer", user=user_response)
+
+@api_router.get("/auth/me", response_model=UserResponse)
+async def get_me(current_user: User = Depends(get_current_user)):
+    """Get current user info"""
+    return UserResponse(
+        id=current_user.id,
+        username=current_user.username,
+        full_name=current_user.full_name,
+        role=current_user.role,
+        permissions=current_user.permissions,
+        is_active=current_user.is_active,
+        created_at=current_user.created_at
+    )
+
+@api_router.post("/auth/logout")
+async def logout(current_user: User = Depends(get_current_user)):
+    """Logout endpoint (client should discard token)"""
+    return {"message": "Logged out successfully"}
+
+# ==================== USER MANAGEMENT (ADMIN ONLY) ====================
+
+@api_router.post("/users", response_model=UserResponse)
+async def create_user(
+    input: UserCreate,
+    current_user: User = Depends(require_permission("user_management"))
+):
+    """Create new user (admin only)"""
+    # Check if username already exists
+    existing = await db.users.find_one({"username": input.username})
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    
+    # Set default permissions based on role
+    if input.role == "admin":
+        permissions = {
+            "devices": True,
+            "configuration": True,
+            "ont_management_view": True,
+            "ont_management_register": True,
+            "ont_management_edit": True,
+            "ont_management_delete": True,
+            "terminal": True,
+            "user_management": True
+        }
+    else:  # operator
+        permissions = {
+            "devices": False,
+            "configuration": False,
+            "ont_management_view": True,
+            "ont_management_register": True,
+            "ont_management_edit": False,
+            "ont_management_delete": False,
+            "terminal": False,
+            "user_management": False
+        }
+    
+    # Override with custom permissions if provided
+    if input.permissions:
+        permissions.update(input.permissions)
+    
+    # Create user
+    user_dict = {
+        "id": str(uuid.uuid4()),
+        "username": input.username,
+        "password_hash": hash_password(input.password),
+        "full_name": input.full_name,
+        "role": input.role,
+        "permissions": permissions,
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_by": current_user.username
+    }
+    
+    await db.users.insert_one(user_dict)
+    
+    return UserResponse(
+        id=user_dict['id'],
+        username=user_dict['username'],
+        full_name=user_dict['full_name'],
+        role=user_dict['role'],
+        permissions=user_dict['permissions'],
+        is_active=user_dict['is_active'],
+        created_at=user_dict['created_at']
+    )
+
+@api_router.get("/users", response_model=List[UserResponse])
+async def get_users(current_user: User = Depends(require_permission("user_management"))):
+    """Get all users (admin only)"""
+    users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(1000)
+    return [UserResponse(**user) for user in users]
+
+@api_router.get("/users/{user_id}", response_model=UserResponse)
+async def get_user(
+    user_id: str,
+    current_user: User = Depends(require_permission("user_management"))
+):
+    """Get user by ID (admin only)"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "password_hash": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return UserResponse(**user)
+
+@api_router.put("/users/{user_id}", response_model=UserResponse)
+async def update_user(
+    user_id: str,
+    input: UserCreate,
+    current_user: User = Depends(require_permission("user_management"))
+):
+    """Update user (admin only)"""
+    existing = await db.users.find_one({"id": user_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    update_data = {
+        "full_name": input.full_name,
+        "role": input.role
+    }
+    
+    # Update password if provided
+    if input.password:
+        update_data["password_hash"] = hash_password(input.password)
+    
+    # Update permissions
+    if input.permissions:
+        update_data["permissions"] = input.permissions
+    
+    await db.users.update_one({"id": user_id}, {"$set": update_data})
+    
+    updated_user = await db.users.find_one({"id": user_id}, {"_id": 0, "password_hash": 0})
+    return UserResponse(**updated_user)
+
+@api_router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    current_user: User = Depends(require_permission("user_management"))
+):
+    """Delete user (admin only)"""
+    # Prevent deleting yourself
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    result = await db.users.delete_one({"id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": "User deleted successfully"}
+
 # ==================== OLT DEVICES ====================
 
 @api_router.post("/devices", response_model=OLTDevice)
