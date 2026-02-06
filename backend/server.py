@@ -856,7 +856,7 @@ async def get_next_ont_id(device_id: str, frame: int = 0, board: int = 1, port: 
     }
 
 @api_router.post("/ont", response_model=ONTDevice)
-async def create_ont(input: ONTDeviceCreate):
+async def create_ont(input: ONTDeviceCreate, current_user: User = Depends(require_permission("ont_management_register"))):
     # Generate registration code
     device = await db.olt_devices.find_one({"id": input.olt_device_id})
     if not device:
