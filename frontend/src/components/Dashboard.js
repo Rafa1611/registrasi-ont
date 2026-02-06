@@ -222,7 +222,7 @@ const Dashboard = ({ API }) => {
 
         {/* Footer */}
         <div className="mt-6 text-center text-blue-200 text-sm">
-          <p>© 2025 Huawei OLT Management System - Version 1.0.0</p>
+          <p>© 2025 Rafa Hotspot - ONT Registration System v1.0.0</p>
         </div>
       </div>
     </div>
