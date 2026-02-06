@@ -495,6 +495,47 @@ async def delete_configuration(config_id: str):
 
 # ==================== ONT DEVICES ====================
 
+@api_router.get("/ont/next-id/{device_id}")
+async def get_next_ont_id(device_id: str, frame: int = 0, board: int = 1, port: int = 3):
+    """
+    Get next available ONT ID for a specific port.
+    Returns the next sequential ONT ID that hasn't been used.
+    """
+    # Find all ONTs on this specific port
+    existing_onts = await db.ont_devices.find({
+        "olt_device_id": device_id,
+        "frame": frame,
+        "board": board,
+        "port": port
+    }, {"_id": 0, "ont_id": 1}).to_list(1000)
+    
+    if not existing_onts:
+        # No ONTs yet, start from 0
+        return {"next_ont_id": 0, "available_ids": list(range(0, 128))}
+    
+    # Get list of used ONT IDs
+    used_ids = sorted([ont["ont_id"] for ont in existing_onts])
+    
+    # Find first available ID (starting from 0)
+    next_id = 0
+    for used_id in used_ids:
+        if next_id == used_id:
+            next_id += 1
+        else:
+            break
+    
+    # Get list of all available IDs
+    all_ids = set(range(0, 128))  # GPON max
+    used_ids_set = set(used_ids)
+    available_ids = sorted(list(all_ids - used_ids_set))
+    
+    return {
+        "next_ont_id": next_id,
+        "used_count": len(used_ids),
+        "available_count": len(available_ids),
+        "available_ids": available_ids[:10]  # Return first 10 available
+    }
+
 @api_router.post("/ont", response_model=ONTDevice)
 async def create_ont(input: ONTDeviceCreate):
     # Generate registration code
@@ -504,10 +545,23 @@ async def create_ont(input: ONTDeviceCreate):
     
     config = await db.olt_configurations.find_one({"device_id": input.olt_device_id})
     
+    # Auto-increment ONT ID if set to -1 (auto mode)
+    ont_id = input.ont_id
+    if ont_id == -1:
+        # Get next available ONT ID
+        next_id_data = await get_next_ont_id(
+            input.olt_device_id, 
+            input.frame, 
+            input.board, 
+            input.port
+        )
+        ont_id = next_id_data["next_ont_id"]
+    
     registration_rule = config.get('registration_rule', '0-(B)-(P)-(O)') if config else '0-(B)-(P)-(O)'
-    registration_code = registration_rule.replace('(B)', str(input.board)).replace('(P)', str(input.port)).replace('(O)', str(input.ont_id))
+    registration_code = registration_rule.replace('(B)', str(input.board)).replace('(P)', str(input.port)).replace('(O)', str(ont_id))
     
     ont_dict = input.model_dump()
+    ont_dict['ont_id'] = ont_id  # Use auto-generated or provided ID
     ont_dict['registration_code'] = registration_code
     ont_obj = ONTDevice(**ont_dict)
     
