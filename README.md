@@ -139,6 +139,12 @@ Setelah instalasi, gunakan kredensial berikut untuk login pertama kali:
 
 ## ✨ Fitur Utama
 
+### 🔐 **Authentication & Authorization**
+- ✅ Login system dengan JWT authentication
+- ✅ Role-based access control (Admin & Operator)
+- ✅ User management (untuk Admin)
+- ✅ Secure password hashing dengan bcrypt
+
 ### 🔌 **Device Management**
 - ✅ Kelola multiple OLT devices
 - ✅ Koneksi Telnet real-time ke OLT
@@ -149,17 +155,20 @@ Setelah instalasi, gunakan kredensial berikut untuk login pertama kali:
 ### ⚙️ **Configuration Management**
 - ✅ Konfigurasi Frame, Board, Port
 - ✅ Template GPON & EPON
-- ✅ VLAN Configuration (Service, IPTV, Multicast)
+- ✅ VLAN Configuration (Service, IPTV, Multicast) dengan panduan lengkap
 - ✅ Service Flow Configuration
 - ✅ Registration Code Rules
 - ✅ Import/Export config.ini files
 - ✅ Command Templates
 
 ### 📡 **ONT Management**
-- ✅ Auto-registration ONT
+- ✅ Auto-registration ONT (Scan ONT Baru)
 - ✅ Manual registration dengan serial number
 - ✅ Port mapping & VLAN assignment
 - ✅ Status monitoring (Online/Offline/Registered)
+- ✅ Description field untuk setiap ONT
+- ✅ "Registered By" tracking - mencatat user yang melakukan registrasi
+- ✅ Post-registration result dengan Rx Optical Power
 - ✅ Bulk ONT operations
 
 ### 💻 **Terminal Console**
@@ -175,6 +184,12 @@ Setelah instalasi, gunakan kredensial berikut untuk login pertama kali:
 - ✅ Export logs ke file
 - ✅ Connection status tracking
 - ✅ Device statistics dashboard
+
+### 👥 **User Management (Admin Only)**
+- ✅ Create, Edit, Delete users
+- ✅ Role assignment (Admin/Operator)
+- ✅ Permission management
+- ✅ User activity tracking
 
 ## 🏗️ Teknologi Stack
 
