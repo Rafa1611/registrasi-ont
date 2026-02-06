@@ -583,7 +583,7 @@ async def create_ont(input: ONTDeviceCreate):
     await db.ont_devices.insert_one(doc)
     
     # Execute registration command if connected
-    if telnet_manager.is_connected(device_id):
+    if telnet_manager.is_connected(input.olt_device_id):
         try:
             cmd = f"ont add {input.frame}/{input.board}/{input.port} {ont_id} sn-auth \\\"{input.serial_number}\\\" omci ont-lineprofile-id {input.line_profile_id} ont-srvprofile-id {input.service_profile_id}"
             if input.description:
