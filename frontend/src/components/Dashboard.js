@@ -57,13 +57,34 @@ const Dashboard = ({ API }) => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-blue-500 rounded-lg">
-              <Wifi className="w-8 h-8 text-white" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-blue-500 rounded-lg">
+                <Wifi className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold text-white">Huawei OLT Management System</h1>
+                <p className="text-blue-200 text-lg">Comprehensive GPON/EPON Management Platform</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-4xl font-bold text-white">Huawei OLT Management System</h1>
-              <p className="text-blue-200 text-lg">Comprehensive GPON/EPON Management Platform</p>
+            
+            {/* User Info & Logout */}
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div className="text-white font-semibold">{user?.full_name}</div>
+                <div className="text-blue-300 text-sm capitalize">{user?.role}</div>
+              </div>
+              <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-blue-300" />
+              </div>
+              <Button
+                onClick={logout}
+                variant="outline"
+                className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
             </div>
           </div>
         </div>
