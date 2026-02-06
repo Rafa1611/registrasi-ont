@@ -23,7 +23,8 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
     line_profile_id: 1,
     service_profile_id: 1,
     dba_profile_id: 1,
-    gemport: '1'
+    gemport: '1',
+    description: ''
   });
 
   useEffect(() => {
@@ -78,7 +79,8 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
           line_profile_id: 1,
           service_profile_id: 1,
           dba_profile_id: 1,
-          gemport: '1'
+          gemport: '1',
+          description: ''
         });
         loadONTs();
       }
@@ -176,6 +178,11 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
                   <Label>Port</Label>
                   <Input name="port" type="number" value={formData.port} onChange={handleInputChange} required className="bg-slate-700 border-slate-600 text-white" />
                 </div>
+              </div>
+              <div>
+                <Label>Description (Opsional)</Label>
+                <Input name="description" value={formData.description} onChange={handleInputChange} placeholder="Nama customer / lokasi / nomor kontrak" className="bg-slate-700 border-slate-600 text-white" />
+                <p className="text-xs text-slate-400 mt-1">Untuk identifikasi customer (max 30 karakter)</p>
               </div>
               <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600">Register ONT</Button>
             </form>
