@@ -588,7 +588,7 @@ async def create_ont(input: ONTDeviceCreate):
             cmd = f"ont add {input.frame}/{input.board}/{input.port} {ont_id} sn-auth \\\"{input.serial_number}\\\" omci ont-lineprofile-id {input.line_profile_id} ont-srvprofile-id {input.service_profile_id}"
             if input.description:
                 cmd += f" desc \\\"{input.description}\\\""
-            await telnet_manager.send_command(device_id, cmd)
+            await telnet_manager.send_command(input.olt_device_id, cmd)
             
             # Note: DBA Profile sudah included dalam Line Profile
             # Tidak perlu execute "ont dba-profile" terpisah
