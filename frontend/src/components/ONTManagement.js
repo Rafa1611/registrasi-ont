@@ -286,19 +286,7 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
                   </div>
                 )}
                 
-                <div>
-                  <Label htmlFor="ont_id">ONT ID</Label>
-                  <Input
-                    id="ont_id"
-                    name="ont_id"
-                    type="number"
-                    value={formData.ont_id}
-                    onChange={handleInputChange}
-                    required
-                    className="bg-slate-700 border-slate-600 text-white"
-                    data-testid="ont-id-input"
-                  />
-                </div>
+                
                 <div>
                   <Label htmlFor="serial_number">Serial Number</Label>
                   <Input
