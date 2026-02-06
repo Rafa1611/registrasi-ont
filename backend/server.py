@@ -174,6 +174,7 @@ class ONTDevice(BaseModel):
     vlan: str = "41"  # Support comma-separated VLANs
     line_profile_id: int = 1
     service_profile_id: int = 1
+    dba_profile_id: int = 1  # DBA Profile ID
     gemport: str = "1"
     description: str = ""
     service_port_index: int = 0  # Starting service-port index
@@ -189,6 +190,7 @@ class ONTDeviceCreate(BaseModel):
     vlan: str = "41"  # Support comma-separated VLANs
     line_profile_id: int = 1
     service_profile_id: int = 1
+    dba_profile_id: int = 1  # DBA Profile ID
     gemport: str = "1"
     description: str = ""
     service_port_index: int = -1  # -1 = auto-generate
@@ -587,6 +589,10 @@ async def create_ont(input: ONTDeviceCreate):
             if input.description:
                 cmd += f" desc \\\"{input.description}\\\""
             await telnet_manager.send_command(device_id, cmd)
+            
+            # Apply DBA Profile
+            dba_cmd = f"ont dba-profile {input.frame}/{input.board}/{input.port} {ont_id} profile-id {input.dba_profile_id}"
+            await telnet_manager.send_command(device_id, dba_cmd)
             
             # Get service-port index
             if input.service_port_index == -1:
