@@ -494,7 +494,9 @@ const ConfigurationPanel = ({ API, selectedDevice }) => {
                     className="bg-slate-700 border-slate-600 text-white"
                     data-testid="config-decrement-input"
                   />
+                  <p className="text-xs text-slate-500 mt-1">Kurangi VLAN ID sebesar nilai ini</p>
                 </div>
+              </div>
               </div>
             </CardContent>
           </Card>
