@@ -577,6 +577,22 @@ async def create_ont(input: ONTDeviceCreate):
     doc['created_at'] = doc['created_at'].isoformat()
     
     await db.ont_devices.insert_one(doc)
+    
+    # Execute registration command if connected
+    if telnet_manager.is_connected(device_id):
+        try:
+            cmd = f"ont add {input.frame}/{input.board}/{input.port} {ont_id} sn-auth \\\"{input.serial_number}\\\" omci ont-lineprofile-id {input.line_profile_id} ont-srvprofile-id {input.service_profile_id}"
+            if input.description:
+                cmd += f" desc \\\"{input.description}\\\""
+            await telnet_manager.send_command(device_id, cmd)
+            
+            # Create service ports
+            for gp in input.gemport.split(','):
+                sp_cmd = f"service-port vlan {input.vlan} gpon {input.frame}/{input.board}/{input.port} ont {ont_id} gemport {gp.strip()} multi-service user-vlan {input.vlan}"
+                await telnet_manager.send_command(device_id, sp_cmd)
+        except Exception as e:
+            print(f"Registration command failed: {e}")
+    
     return ont_obj
 
 @api_router.get("/ont", response_model=List[ONTDevice])
