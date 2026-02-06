@@ -106,6 +106,57 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
     }
   };
 
+  const handleScanONT = async () => {
+    if (!selectedDevice) {
+      toast.error('Pilih device terlebih dahulu');
+      return;
+    }
+
+    setIsScanning(true);
+    try {
+      const response = await fetch(`${API}/ont/detect/${selectedDevice.id}`, {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDetectedOnts(data.onts || []);
+        setShowDetected(true);
+        toast.success(`Terdeteksi ${data.detected_count} ONT baru!`);
+      } else {
+        const error = await response.json();
+        toast.error('Gagal scan ONT: ' + (error.detail || 'Unknown error'));
+      }
+    } catch (error) {
+      toast.error('Error: ' + error.message);
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleAutoRegister = async (detectedOnt) => {
+    try {
+      const response = await fetch(`${API}/ont/auto-register/${selectedDevice.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(detectedOnt)
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success('ONT berhasil didaftarkan otomatis!');
+        // Remove from detected list
+        setDetectedOnts(prev => prev.filter(ont => ont.serial_number !== detectedOnt.serial_number));
+        loadONTs();
+      } else {
+        toast.warning(data.message || 'ONT sudah terdaftar');
+      }
+    } catch (error) {
+      toast.error('Error: ' + error.message);
+    }
+  };
+
   if (!selectedDevice) {
     return (
       <Card className="bg-slate-800/50 border-slate-700">
