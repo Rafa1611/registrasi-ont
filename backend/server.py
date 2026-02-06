@@ -1195,10 +1195,42 @@ async def auto_register_detected_ont(device_id: str, ont_data: Dict[str, Any], c
         except Exception as e:
             print(f"Warning: Failed to execute registration command: {e}")
     
+    # Get optical info after registration
+    optical_info = None
+    if telnet_manager.is_connected(device_id):
+        try:
+            optical_cmd = f"display ont optical-info {ont_data['ont_id']} {ont_data['board']}"
+            print(f"\n📡 Getting optical info: {optical_cmd}")
+            
+            optical_output = await telnet_manager.send_command(device_id, optical_cmd)
+            
+            rx_power = None
+            if optical_output and "Rx optical power" in optical_output:
+                for line in optical_output.split('\n'):
+                    if "Rx optical power" in line:
+                        parts = line.split(':')
+                        if len(parts) > 1:
+                            rx_power = parts[1].strip()
+                            print(f"✅ Rx Optical Power: {rx_power} dBm")
+                            break
+            
+            optical_info = {
+                "rx_power": rx_power,
+                "frame": ont_data['frame'],
+                "board": ont_data['board'],
+                "port": ont_data['port'],
+                "ont_id": ont_data['ont_id']
+            }
+        except Exception as e:
+            print(f"Failed to get optical info: {e}")
+    
+    ont_response = ont_obj.model_dump()
+    ont_response['optical_info'] = optical_info
+    
     return {
         "success": True,
         "message": "ONT auto-registered successfully",
-        "ont": ont_obj.model_dump()
+        "ont": ont_response
     }
 
 # ==================== COMMAND LOGS ====================
