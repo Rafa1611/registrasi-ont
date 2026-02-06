@@ -15,9 +15,11 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [showDetected, setShowDetected] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [autoOntId, setAutoOntId] = useState(true);
+  const [nextOntId, setNextOntId] = useState(0);
   const [formData, setFormData] = useState({
     olt_device_id: '',
-    ont_id: 1,
+    ont_id: -1,
     serial_number: '',
     frame: 0,
     board: 1,
@@ -31,6 +33,31 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
       setFormData(prev => ({ ...prev, olt_device_id: selectedDevice.id }));
     }
   }, [selectedDevice]);
+
+  useEffect(() => {
+    if (isAddDialogOpen && autoOntId) {
+      fetchNextOntId();
+    }
+  }, [isAddDialogOpen, formData.frame, formData.board, formData.port, autoOntId]);
+
+  const fetchNextOntId = async () => {
+    if (!selectedDevice) return;
+    
+    try {
+      const response = await fetch(
+        `${API}/ont/next-id/${selectedDevice.id}?frame=${formData.frame}&board=${formData.board}&port=${formData.port}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setNextOntId(data.next_ont_id);
+        if (autoOntId) {
+          setFormData(prev => ({ ...prev, ont_id: -1 }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching next ONT ID:', error);
+    }
+  };
 
   const loadONTs = async () => {
     if (!selectedDevice) return;
@@ -48,12 +75,18 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [name]: ['ont_id', 'frame', 'board', 'port', 'vlan'].includes(name) 
         ? parseInt(value) || 0 
         : value
-    }));
+    };
+    setFormData(newFormData);
+    
+    // If frame/board/port changed and auto mode is on, fetch next ID
+    if (['frame', 'board', 'port'].includes(name) && autoOntId) {
+      setTimeout(() => fetchNextOntId(), 100);
+    }
   };
 
   const handleAddONT = async (e) => {
