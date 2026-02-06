@@ -25,7 +25,7 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
     frame: 0,
     board: 1,
     port: 3,
-    vlan: 41,
+    vlan: '41',  // Changed to string for comma-separated support
     line_profile_id: 1,
     service_profile_id: 1,
     gemport: '1',
@@ -82,7 +82,7 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
     const { name, value } = e.target;
     const newFormData = {
       ...formData,
-      [name]: ['ont_id', 'frame', 'board', 'port', 'vlan'].includes(name) 
+      [name]: ['ont_id', 'frame', 'board', 'port', 'line_profile_id', 'service_profile_id'].includes(name) 
         ? parseInt(value) || 0 
         : value
     };
@@ -373,14 +373,16 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
                     <Input
                       id="vlan"
                       name="vlan"
-                      type="number"
                       value={formData.vlan}
                       onChange={handleInputChange}
                       required
+                      placeholder="41 atau 40,42,50"
                       className="bg-slate-700 border-slate-600 text-white"
                       data-testid="ont-vlan-input"
                     />
-                    <p className="text-xs text-slate-400 mt-1">Service VLAN ID</p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Single: 41 | Multiple: 40,42,50 (sesuai GEM port)
+                    </p>
                   </div>
                 </div>
                 
