@@ -1,9 +1,141 @@
-# 🌐 Huawei OLT Management System
+# 🌐 Rafa Hotspot ONT Registrasi
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![Status](https://img.shields.io/badge/status-production-green.svg)
 
-Sistem manajemen OLT Huawei berbasis web yang komprehensif untuk GPON/EPON dengan fitur lengkap untuk konfigurasi, monitoring, dan management ONT devices.
+Sistem registrasi ONT Huawei berbasis web yang komprehensif untuk GPON/EPON dengan fitur lengkap untuk konfigurasi, monitoring, dan management ONT devices.
+
+## 📦 Instalasi Cepat
+
+### Persyaratan Sistem
+- Ubuntu/Debian Linux (atau distribusi Linux lainnya)
+- Node.js (v14 atau lebih baru)
+- Python 3.8+
+- MongoDB
+- Yarn package manager
+- Git
+
+### Instalasi Otomatis (Recommended)
+
+Jalankan perintah berikut di terminal:
+
+```bash
+curl -o install.sh https://raw.githubusercontent.com/Rafa1611/registrasi-ont/main/install.sh
+chmod +x install.sh
+./install.sh
+```
+
+Atau clone dulu repository dan jalankan scriptnya:
+
+```bash
+git clone https://github.com/Rafa1611/registrasi-ont.git
+cd registrasi-ont
+chmod +x install.sh
+./install.sh
+```
+
+Script akan secara otomatis:
+1. ✅ Check system requirements
+2. ✅ Clone repository dari GitHub
+3. ✅ Install semua dependencies (backend & frontend)
+4. ✅ Setup environment files
+5. ✅ Setup MongoDB
+6. ✅ Create admin user default
+7. ✅ Build frontend
+8. ✅ Setup systemd services
+
+### Instalasi Manual
+
+Jika ingin install secara manual:
+
+```bash
+# 1. Clone repository
+git clone https://github.com/Rafa1611/registrasi-ont.git
+cd registrasi-ont
+
+# 2. Install backend dependencies
+cd backend
+pip3 install -r requirements.txt
+
+# 3. Create backend/.env
+cat > .env << 'EOF'
+MONGO_URL=mongodb://localhost:27017
+DB_NAME=rafa_hotspot_ont
+JWT_SECRET_KEY=your-secret-key-change-in-production-2024
+HOST=0.0.0.0
+PORT=8001
+EOF
+
+# 4. Create admin user
+python3 create_admin.py
+
+# 5. Install frontend dependencies
+cd ../frontend
+yarn install
+
+# 6. Create frontend/.env
+cat > .env << 'EOF'
+REACT_APP_BACKEND_URL=http://localhost:8001
+EOF
+
+# 7. Start services (development mode)
+# Terminal 1 - Backend
+cd backend
+python3 -m uvicorn server:app --host 0.0.0.0 --port 8001
+
+# Terminal 2 - Frontend
+cd frontend
+yarn start
+```
+
+## 🚀 Menjalankan Aplikasi
+
+### Menggunakan Systemd (Production)
+
+```bash
+# Start services
+sudo systemctl start rafa-hotspot-backend
+sudo systemctl start rafa-hotspot-frontend
+
+# Check status
+sudo systemctl status rafa-hotspot-backend
+sudo systemctl status rafa-hotspot-frontend
+
+# Enable auto-start on boot
+sudo systemctl enable rafa-hotspot-backend
+sudo systemctl enable rafa-hotspot-frontend
+
+# View logs
+sudo journalctl -u rafa-hotspot-backend -f
+sudo journalctl -u rafa-hotspot-frontend -f
+```
+
+### Development Mode
+
+```bash
+# Terminal 1 - Backend
+cd backend
+python3 -m uvicorn server:app --host 0.0.0.0 --port 8001 --reload
+
+# Terminal 2 - Frontend
+cd frontend
+yarn start
+```
+
+## 🔐 Login Default
+
+Setelah instalasi, gunakan kredensial berikut untuk login pertama kali:
+
+- **Username:** `admin`
+- **Password:** `admin123`
+
+⚠️ **PENTING:** Segera ubah password setelah login pertama kali!
+
+## 🌐 Akses Aplikasi
+
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://localhost:8001/api
+- **API Docs:** http://localhost:8001/docs
 
 ## ✨ Fitur Utama
 
