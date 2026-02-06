@@ -25,7 +25,11 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
     frame: 0,
     board: 1,
     port: 3,
-    vlan: 41
+    vlan: 41,
+    line_profile_id: 1,
+    service_profile_id: 1,
+    gemport: '1',
+    description: ''
   });
 
   useEffect(() => {
@@ -109,7 +113,11 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
           frame: 0,
           board: 1,
           port: 3,
-          vlan: 41
+          vlan: 41,
+          line_profile_id: 1,
+          service_profile_id: 1,
+          gemport: '1',
+          description: ''
         });
         if (autoOntId) {
           fetchNextOntId();
