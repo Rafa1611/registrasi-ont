@@ -1077,7 +1077,7 @@ async def simulate_detect_onts(device_id: str):
     }
 
 @api_router.post("/ont/auto-register/{device_id}")
-async def auto_register_detected_ont(device_id: str, ont_data: Dict[str, Any]):
+async def auto_register_detected_ont(device_id: str, ont_data: Dict[str, Any], current_user: User = Depends(require_permission("ont_management_register"))):
     """
     Auto-register a detected ONT.
     Takes detected ONT info and registers it in the system.
