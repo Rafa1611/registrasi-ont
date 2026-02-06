@@ -882,6 +882,7 @@ async def create_ont(input: ONTDeviceCreate, current_user: User = Depends(requir
     ont_dict = input.model_dump()
     ont_dict['ont_id'] = ont_id  # Use auto-generated or provided ID
     ont_dict['registration_code'] = registration_code
+    ont_dict['registered_by'] = current_user.full_name  # Auto-fill from logged user
     ont_obj = ONTDevice(**ont_dict)
     
     doc = ont_obj.model_dump()
