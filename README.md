@@ -9,11 +9,13 @@ Sistem registrasi ONT Huawei berbasis web yang komprehensif untuk GPON/EPON deng
 
 ### Persyaratan Sistem
 - Ubuntu/Debian Linux (atau distribusi Linux lainnya)
-- Node.js (v14 atau lebih baru)
+- **Node.js v20 atau lebih baru** (REQUIRED: >= 20.0.0)
 - Python 3.8+
 - MongoDB
 - Yarn package manager
 - Git
+
+⚠️ **PENTING:** Aplikasi membutuhkan Node.js version 20 atau lebih baru. Jika Anda menggunakan Node.js v18 atau lebih lama, upgrade dulu sebelum instalasi.
 
 ### Instalasi Otomatis (Recommended)
 
