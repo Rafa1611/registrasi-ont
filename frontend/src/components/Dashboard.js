@@ -167,7 +167,7 @@ const Dashboard = ({ API }) => {
                 )}
                 {user?.permissions?.user_management && (
                   <TabsTrigger value="users" className="data-[state=active]:bg-blue-500 text-white">
-                    <User className="w-4 h-4 mr-2" />
+                    <Users className="w-4 h-4 mr-2" />
                     Users
                   </TabsTrigger>
                 )}
