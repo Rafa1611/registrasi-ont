@@ -136,27 +136,44 @@ const Dashboard = ({ API }) => {
         {/* Main Content */}
         <Card className="bg-white/10 backdrop-blur-lg border-white/20">
           <CardContent className="p-6">
-            <Tabs defaultValue="devices" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 bg-slate-800/50">
-                <TabsTrigger value="devices" className="data-[state=active]:bg-blue-500 text-white">
-                  <Server className="w-4 h-4 mr-2" />
-                  Devices
-                </TabsTrigger>
-                <TabsTrigger value="configuration" className="data-[state=active]:bg-blue-500 text-white">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Configuration
-                </TabsTrigger>
-                <TabsTrigger value="ont" className="data-[state=active]:bg-blue-500 text-white">
-                  <Activity className="w-4 h-4 mr-2" />
-                  ONT Management
-                </TabsTrigger>
-                <TabsTrigger value="terminal" className="data-[state=active]:bg-blue-500 text-white">
-                  <Terminal className="w-4 h-4 mr-2" />
-                  Terminal
-                </TabsTrigger>
+            <Tabs defaultValue={user?.permissions?.ont_management_view ? "ont" : "devices"} className="w-full">
+              <TabsList className={`grid w-full bg-slate-800/50 ${
+                user?.role === 'admin' ? 'grid-cols-5' : 'grid-cols-1'
+              }`}>
+                {user?.permissions?.devices && (
+                  <TabsTrigger value="devices" className="data-[state=active]:bg-blue-500 text-white">
+                    <Server className="w-4 h-4 mr-2" />
+                    Devices
+                  </TabsTrigger>
+                )}
+                {user?.permissions?.configuration && (
+                  <TabsTrigger value="configuration" className="data-[state=active]:bg-blue-500 text-white">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configuration
+                  </TabsTrigger>
+                )}
+                {user?.permissions?.ont_management_view && (
+                  <TabsTrigger value="ont" className="data-[state=active]:bg-blue-500 text-white">
+                    <Activity className="w-4 h-4 mr-2" />
+                    ONT Management
+                  </TabsTrigger>
+                )}
+                {user?.permissions?.terminal && (
+                  <TabsTrigger value="terminal" className="data-[state=active]:bg-blue-500 text-white">
+                    <Terminal className="w-4 h-4 mr-2" />
+                    Terminal
+                  </TabsTrigger>
+                )}
+                {user?.permissions?.user_management && (
+                  <TabsTrigger value="users" className="data-[state=active]:bg-blue-500 text-white">
+                    <User className="w-4 h-4 mr-2" />
+                    Users
+                  </TabsTrigger>
+                )}
               </TabsList>
 
-              <TabsContent value="devices" className="mt-6">
+              {user?.permissions?.devices && (
+                <TabsContent value="devices" className="mt-6">
                 <DeviceManagement 
                   API={API}
                   devices={devices}
