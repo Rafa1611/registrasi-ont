@@ -1,34 +1,35 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
-}
-
-.App-header {
-    background-color: #0f0f10;
+.App {
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
 }
 
-.App-link {
-    color: #61dafb;
+/* Custom scrollbar for terminal */
+.terminal-scroll::-webkit-scrollbar {
+    width: 8px;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
+.terminal-scroll::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+
+.terminal-scroll::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 4px;
+}
+
+.terminal-scroll::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+/* Animation for status indicators */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
     }
-    to {
-        transform: rotate(360deg);
+    50% {
+        opacity: 0.5;
     }
+}
+
+.animate-pulse-slow {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
