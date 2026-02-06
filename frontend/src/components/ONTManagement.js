@@ -150,7 +150,12 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
 
     setIsScanning(true);
     try {
-      const response = await fetch(`${API}/ont/detect/${selectedDevice.id}`, {
+      // Use simulate endpoint for demo (change to /detect for real OLT)
+      const endpoint = selectedDevice.is_connected 
+        ? `${API}/ont/detect/${selectedDevice.id}`
+        : `${API}/ont/simulate-detect/${selectedDevice.id}`;
+      
+      const response = await fetch(endpoint, {
         method: 'POST'
       });
 
@@ -158,7 +163,14 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
         const data = await response.json();
         setDetectedOnts(data.onts || []);
         setShowDetected(true);
-        toast.success(`Terdeteksi ${data.detected_count} ONT baru!`);
+        
+        if (data.simulation) {
+          toast.success(`🎬 SIMULASI: Terdeteksi ${data.detected_count} ONT baru!`, {
+            description: 'Data ini hanya untuk demo'
+          });
+        } else {
+          toast.success(`Terdeteksi ${data.detected_count} ONT baru!`);
+        }
       } else {
         const error = await response.json();
         toast.error('Gagal scan ONT: ' + (error.detail || 'Unknown error'));
@@ -213,7 +225,7 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
           <Button 
             className="bg-green-500 hover:bg-green-600" 
             onClick={handleScanONT}
-            disabled={isScanning || !selectedDevice.is_connected}
+            disabled={isScanning}
             data-testid="scan-ont-btn"
           >
             {isScanning ? (
@@ -224,7 +236,7 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
             ) : (
               <>
                 <Search className="w-4 h-4 mr-2" />
-                Scan ONT Baru
+                {selectedDevice?.is_connected ? 'Scan ONT Baru' : '🎬 Simulasi Scan'}
               </>
             )}
           </Button>
