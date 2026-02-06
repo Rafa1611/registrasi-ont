@@ -27,11 +27,19 @@ echo -e "${GREEN}[1/9]${NC} Checking system requirements..."
 
 # Check for required commands
 command -v git >/dev/null 2>&1 || { echo -e "${RED}Error: Git is required but not installed. Install: sudo apt install git${NC}" >&2; exit 1; }
-command -v node >/dev/null 2>&1 || { echo -e "${RED}Error: Node.js is required but not installed. Install: sudo apt install nodejs${NC}" >&2; exit 1; }
+command -v node >/dev/null 2>&1 || { echo -e "${RED}Error: Node.js is required but not installed.${NC}" >&2; echo -e "${YELLOW}Install with: curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt install -y nodejs${NC}" >&2; exit 1; }
 command -v python3 >/dev/null 2>&1 || { echo -e "${RED}Error: Python 3 is required but not installed. Install: sudo apt install python3${NC}" >&2; exit 1; }
 command -v pip3 >/dev/null 2>&1 || { echo -e "${RED}Error: pip3 is required but not installed. Install: sudo apt install python3-pip${NC}" >&2; exit 1; }
 command -v yarn >/dev/null 2>&1 || { echo -e "${RED}Error: Yarn is required but not installed. Install: sudo npm install -g yarn${NC}" >&2; exit 1; }
 command -v mongod >/dev/null 2>&1 || { echo -e "${YELLOW}Warning: MongoDB not found. Please install MongoDB: sudo apt install mongodb${NC}"; }
+
+# Check Node.js version (must be >= 20.0.0)
+NODE_VERSION=$(node --version | cut -d'v' -f2 | cut -d'.' -f1)
+if [ "$NODE_VERSION" -lt 20 ]; then
+    echo -e "${RED}Error: Node.js version must be >= 20.0.0 (current: $(node --version))${NC}"
+    echo -e "${YELLOW}Upgrade with: curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt install -y nodejs${NC}"
+    exit 1
+fi
 
 echo -e "${GREEN}✓${NC} System requirements check passed"
 echo ""

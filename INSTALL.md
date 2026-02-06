@@ -21,7 +21,7 @@
 
 ### Software Requirements
 - **OS:** Ubuntu 20.04/22.04, Debian 11/12, atau distribusi Linux lainnya
-- **Node.js:** v14.x atau lebih baru (recommended: v18.x)
+- **Node.js:** v20.x atau lebih baru (REQUIRED: >= 20.0.0)
 - **Python:** 3.8 atau lebih baru
 - **MongoDB:** 4.4 atau lebih baru
 - **Yarn:** Latest version
@@ -34,8 +34,8 @@
 # Update system
 sudo apt update && sudo apt upgrade -y
 
-# Install Node.js (v18)
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+# Install Node.js (v20 LTS - REQUIRED)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
 # Install Python 3 & pip
