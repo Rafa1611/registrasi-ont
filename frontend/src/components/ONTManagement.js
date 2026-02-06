@@ -278,6 +278,7 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {showDetected && detectedOnts.length > 0 && (
