@@ -6,12 +6,18 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Activity } from 'lucide-react';
+import { Plus, Trash2, Activity, Search, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ONTManagement = ({ API, devices, selectedDevice }) => {
   const [onts, setOnts] = useState([]);
+  const [detectedOnts, setDetectedOnts] = useState([]);
+  const [isScanning, setIsScanning] = useState(false);
+  const [showDetected, setShowDetected] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isDescDialogOpen, setIsDescDialogOpen] = useState(false);
+  const [selectedOntForDesc, setSelectedOntForDesc] = useState(null);
+  const [tempDescription, setTempDescription] = useState('');
   const [formData, setFormData] = useState({
     olt_device_id: '',
     ont_id: 0,
@@ -102,6 +108,72 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
     }
   };
 
+  const handleScanONT = async () => {
+    if (!selectedDevice) {
+      toast.error('Pilih device terlebih dahulu');
+      return;
+    }
+    setIsScanning(true);
+    try {
+      const endpoint = selectedDevice.is_connected 
+        ? `${API}/ont/detect/${selectedDevice.id}`
+        : `${API}/ont/simulate-detect/${selectedDevice.id}`;
+      
+      const response = await fetch(endpoint, { method: 'POST' });
+      if (response.ok) {
+        const data = await response.json();
+        setDetectedOnts(data.onts || []);
+        setShowDetected(true);
+        toast.success(`${data.simulation ? '🎬 SIMULASI: ' : ''}Terdeteksi ${data.detected_count} ONT baru!`);
+      } else {
+        toast.error('Gagal scan ONT');
+      }
+    } catch (error) {
+      toast.error('Error: ' + error.message);
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleAutoRegisterClick = (ont) => {
+    setSelectedOntForDesc(ont);
+    setTempDescription('');
+    setIsDescDialogOpen(true);
+  };
+
+  const handleAutoRegisterConfirm = async () => {
+    if (!selectedOntForDesc) return;
+    try {
+      const payload = {
+        ...selectedOntForDesc,
+        description: tempDescription,
+        line_profile_id: 1,
+        service_profile_id: 1,
+        dba_profile_id: 1,
+        gemport: '1',
+        vlan: '41'
+      };
+      
+      const response = await fetch(`${API}/ont/auto-register/${selectedDevice.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success('ONT berhasil didaftarkan!');
+        setDetectedOnts(prev => prev.filter(ont => ont.serial_number !== selectedOntForDesc.serial_number));
+        loadONTs();
+        setIsDescDialogOpen(false);
+        setSelectedOntForDesc(null);
+      } else {
+        toast.warning(data.message || 'ONT sudah terdaftar');
+      }
+    } catch (error) {
+      toast.error('Error: ' + error.message);
+    }
+  };
+
   if (!selectedDevice) {
     return (
       <Card className="bg-slate-800/50 border-slate-700">
@@ -119,7 +191,25 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
           <h2 className="text-2xl font-bold text-white">ONT Management</h2>
           <p className="text-blue-200">Device: {selectedDevice.name}</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <div className="flex gap-2">
+          <Button 
+            className="bg-green-500 hover:bg-green-600" 
+            onClick={handleScanONT}
+            disabled={isScanning}
+          >
+            {isScanning ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Scanning...
+              </>
+            ) : (
+              <>
+                <Search className="w-4 h-4 mr-2" />
+                {selectedDevice?.is_connected ? 'Scan ONT Baru' : '🎬 Simulasi Scan'}
+              </>
+            )}
+          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-blue-500 hover:bg-blue-600">
               <Plus className="w-4 h-4 mr-2" />
@@ -189,6 +279,86 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
           </DialogContent>
         </Dialog>
       </div>
+
+      {showDetected && detectedOnts.length > 0 && (
+        <Card className="bg-green-900/30 border-green-500">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Search className="w-5 h-5 text-green-400" />
+                  ONT Terdeteksi (Belum Terdaftar)
+                </CardTitle>
+                <CardDescription className="text-green-200">
+                  {detectedOnts.length} ONT baru ditemukan
+                </CardDescription>
+              </div>
+              <Button variant="outline" size="sm" className="border-green-500 text-green-400" onClick={() => setShowDetected(false)}>
+                Tutup
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-green-700">
+                  <TableHead className="text-green-300">Serial Number</TableHead>
+                  <TableHead className="text-green-300">Frame/Board/Port</TableHead>
+                  <TableHead className="text-green-300">ONT ID</TableHead>
+                  <TableHead className="text-green-300">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {detectedOnts.map((ont, index) => (
+                  <TableRow key={index} className="border-green-700">
+                    <TableCell className="text-white font-mono text-sm">{ont.serial_number}</TableCell>
+                    <TableCell className="text-green-200">{ont.frame}/{ont.board}/{ont.port}</TableCell>
+                    <TableCell className="text-green-200">{ont.ont_id}</TableCell>
+                    <TableCell>
+                      <Button size="sm" className="bg-green-500 hover:bg-green-600" onClick={() => handleAutoRegisterClick(ont)}>
+                        <Plus className="w-4 h-4 mr-1" />
+                        Register
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={isDescDialogOpen} onOpenChange={setIsDescDialogOpen}>
+        <DialogContent className="bg-slate-800 text-white border-slate-700">
+          <DialogHeader>
+            <DialogTitle>Input Description ONT</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              {selectedOntForDesc && `Serial: ${selectedOntForDesc.serial_number}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Description (Opsional)</Label>
+              <Input
+                value={tempDescription}
+                onChange={(e) => setTempDescription(e.target.value)}
+                placeholder="Nama customer / lokasi / nomor kontrak"
+                className="bg-slate-700 border-slate-600 text-white"
+                maxLength={30}
+              />
+              <p className="text-xs text-slate-400 mt-1">Max 30 karakter (opsional)</p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleAutoRegisterConfirm} className="flex-1 bg-blue-500 hover:bg-blue-600">
+                Register ONT
+              </Button>
+              <Button onClick={() => setIsDescDialogOpen(false)} variant="outline" className="border-slate-600 text-white">
+                Batal
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
