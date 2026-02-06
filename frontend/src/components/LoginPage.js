@@ -31,14 +31,14 @@ const LoginPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-slate-800/90 border-slate-700 backdrop-blur">
         <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center">
-            <Wifi className="w-8 h-8 text-blue-400" />
+          <div className="mx-auto w-24 h-24 flex items-center justify-center">
+            <img src="/logo.png" alt="Rafa Hotspot Logo" className="w-full h-full object-contain" />
           </div>
           <CardTitle className="text-2xl font-bold text-white">
-            Huawei OLT Management
+            Rafa Hotspot
           </CardTitle>
           <CardDescription className="text-slate-400">
-            Masuk ke sistem manajemen OLT
+            ONT Registration Management System
           </CardDescription>
         </CardHeader>
         <CardContent>
