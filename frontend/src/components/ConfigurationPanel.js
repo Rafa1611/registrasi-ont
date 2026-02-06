@@ -357,57 +357,104 @@ const ConfigurationPanel = ({ API, selectedDevice }) => {
         <TabsContent value="vlan" className="space-y-4">
           <Card className="bg-slate-800/50 border-slate-700">
             <CardHeader>
-              <CardTitle className="text-white">Konfigurasi VLAN</CardTitle>
-              <CardDescription className="text-slate-400">Service, VOD, dan Multicast VLAN</CardDescription>
+              <CardTitle className="text-white">Konfigurasi VLAN Default</CardTitle>
+              <CardDescription className="text-slate-400">
+                Setting VLAN untuk Internet, IPTV (VOD), dan Multicast - nilai ini digunakan sebagai default saat registrasi ONT
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-white">Service Outer VLAN</Label>
-                  <Input
-                    name="service_outer_vlan"
-                    type="number"
-                    value={formData.service_outer_vlan}
-                    onChange={handleInputChange}
-                    className="bg-slate-700 border-slate-600 text-white"
-                    data-testid="config-service-outer-vlan-input"
-                  />
+            <CardContent className="space-y-6">
+              
+              {/* Internet Service VLAN */}
+              <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <h3 className="text-sm font-semibold text-blue-300">🌐 Internet Service (HSI)</h3>
                 </div>
-                <div>
-                  <Label className="text-white">Service Inner VLAN</Label>
-                  <Input
-                    name="service_inner_vlan"
-                    type="number"
-                    value={formData.service_inner_vlan}
-                    onChange={handleInputChange}
-                    className="bg-slate-700 border-slate-600 text-white"
-                    data-testid="config-service-inner-vlan-input"
-                  />
+                <p className="text-xs text-slate-400 mb-3">VLAN untuk layanan internet broadband customer</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-white flex items-center gap-2">
+                      Service Outer VLAN
+                      <span className="text-xs text-slate-400">(S-VLAN)</span>
+                    </Label>
+                    <Input
+                      name="service_outer_vlan"
+                      type="number"
+                      value={formData.service_outer_vlan}
+                      onChange={handleInputChange}
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="config-service-outer-vlan-input"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">VLAN tag dari OLT ke jaringan core</p>
+                  </div>
+                  <div>
+                    <Label className="text-white flex items-center gap-2">
+                      Service Inner VLAN
+                      <span className="text-xs text-slate-400">(C-VLAN)</span>
+                    </Label>
+                    <Input
+                      name="service_inner_vlan"
+                      type="number"
+                      value={formData.service_inner_vlan}
+                      onChange={handleInputChange}
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="config-service-inner-vlan-input"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">VLAN tag dari ONT ke OLT (biasanya sama)</p>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-white">VOD Outer VLAN</Label>
-                  <Input
-                    name="vod_outer_vlan"
-                    type="number"
-                    value={formData.vod_outer_vlan}
-                    onChange={handleInputChange}
-                    className="bg-slate-700 border-slate-600 text-white"
-                    data-testid="config-vod-outer-vlan-input"
-                  />
+              </div>
+
+              {/* IPTV/VOD Service VLAN */}
+              <div className="bg-purple-900/20 border border-purple-700/50 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                  <h3 className="text-sm font-semibold text-purple-300">📺 IPTV / Video on Demand (VOD)</h3>
                 </div>
-                <div>
-                  <Label className="text-white">VOD Inner VLAN</Label>
-                  <Input
-                    name="vod_inner_vlan"
-                    type="number"
-                    value={formData.vod_inner_vlan}
-                    onChange={handleInputChange}
-                    className="bg-slate-700 border-slate-600 text-white"
-                    data-testid="config-vod-inner-vlan-input"
-                  />
+                <p className="text-xs text-slate-400 mb-3">VLAN untuk layanan TV berbasis IP (UseeTV, IndiHome TV, dll)</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-white flex items-center gap-2">
+                      VOD Outer VLAN
+                      <span className="text-xs text-slate-400">(S-VLAN)</span>
+                    </Label>
+                    <Input
+                      name="vod_outer_vlan"
+                      type="number"
+                      value={formData.vod_outer_vlan}
+                      onChange={handleInputChange}
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="config-vod-outer-vlan-input"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">VLAN tag IPTV ke core network</p>
+                  </div>
+                  <div>
+                    <Label className="text-white flex items-center gap-2">
+                      VOD Inner VLAN
+                      <span className="text-xs text-slate-400">(C-VLAN)</span>
+                    </Label>
+                    <Input
+                      name="vod_inner_vlan"
+                      type="number"
+                      value={formData.vod_inner_vlan}
+                      onChange={handleInputChange}
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="config-vod-inner-vlan-input"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">VLAN tag IPTV dari ONT ke OLT</p>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-white">Multicast VLAN</Label>
+              </div>
+
+              {/* Multicast VLAN */}
+              <div className="bg-orange-900/20 border border-orange-700/50 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                  <h3 className="text-sm font-semibold text-orange-300">📡 Multicast VLAN</h3>
+                </div>
+                <p className="text-xs text-slate-400 mb-3">VLAN untuk layanan broadcast/multicast (TV streaming, video conference, dll)</p>
+                <div className="w-1/2">
+                  <Label className="text-white">Multicast VLAN ID</Label>
                   <Input
                     name="multicast_vlan"
                     type="number"
@@ -416,28 +463,34 @@ const ConfigurationPanel = ({ API, selectedDevice }) => {
                     className="bg-slate-700 border-slate-600 text-white"
                     data-testid="config-multicast-vlan-input"
                   />
+                  <p className="text-xs text-slate-500 mt-1">Untuk IGMP snooping & multicast traffic</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-white">Increment Value</Label>
-                  <Input
-                    name="increment_value"
-                    type="number"
-                    value={formData.increment_value}
-                    onChange={handleInputChange}
-                    className="bg-slate-700 border-slate-600 text-white"
-                    data-testid="config-increment-input"
-                  />
-                </div>
-                <div>
-                  <Label className="text-white">Decrement Value</Label>
-                  <Input
-                    name="decrement_value"
-                    type="number"
-                    value={formData.decrement_value}
-                    onChange={handleInputChange}
+              {/* Increment/Decrement Info */}
+              <div className="bg-slate-900/50 border border-slate-600 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-slate-300 mb-3">🔢 Auto Numbering</h3>
+                <p className="text-xs text-slate-400 mb-3">Nilai increment/decrement untuk auto-generate VLAN ID saat registrasi mass ONT</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-white">Increment Value</Label>
+                    <Input
+                      name="increment_value"
+                      type="number"
+                      value={formData.increment_value}
+                      onChange={handleInputChange}
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="config-increment-input"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">Tambah VLAN ID sebesar nilai ini</p>
+                  </div>
+                  <div>
+                    <Label className="text-white">Decrement Value</Label>
+                    <Input
+                      name="decrement_value"
+                      type="number"
+                      value={formData.decrement_value}
+                      onChange={handleInputChange}
                     className="bg-slate-700 border-slate-600 text-white"
                     data-testid="config-decrement-input"
                   />
