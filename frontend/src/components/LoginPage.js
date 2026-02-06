@@ -92,7 +92,7 @@ const LoginPage = () => {
       </Card>
       
       <div className="absolute bottom-4 text-center text-slate-400 text-sm">
-        <p>© 2025 Huawei OLT Management System v1.0.0</p>
+        <p>© 2025 Rafa Hotspot - ONT Registration System v1.0.0</p>
       </div>
     </div>
   );
