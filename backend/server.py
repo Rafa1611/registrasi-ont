@@ -172,6 +172,10 @@ class ONTDevice(BaseModel):
     board: int
     port: int
     vlan: int
+    line_profile_id: int = 1
+    service_profile_id: int = 1
+    gemport: str = "1"
+    description: str = ""
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ONTDeviceCreate(BaseModel):
@@ -182,6 +186,10 @@ class ONTDeviceCreate(BaseModel):
     board: int
     port: int
     vlan: int
+    line_profile_id: int = 1
+    service_profile_id: int = 1
+    gemport: str = "1"
+    description: str = ""
 
 class CommandLog(BaseModel):
     model_config = ConfigDict(extra="ignore")
