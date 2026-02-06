@@ -174,13 +174,32 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
           <h2 className="text-2xl font-bold text-white">ONT Management</h2>
           <p className="text-blue-200">Device: {selectedDevice.name}</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-500 hover:bg-blue-600" data-testid="add-ont-btn">
-              <Plus className="w-4 h-4 mr-2" />
-              Register ONT
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button 
+            className="bg-green-500 hover:bg-green-600" 
+            onClick={handleScanONT}
+            disabled={isScanning || !selectedDevice.is_connected}
+            data-testid="scan-ont-btn"
+          >
+            {isScanning ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Scanning...
+              </>
+            ) : (
+              <>
+                <Search className="w-4 h-4 mr-2" />
+                Scan ONT Baru
+              </>
+            )}
+          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-500 hover:bg-blue-600" data-testid="add-ont-btn">
+                <Plus className="w-4 h-4 mr-2" />
+                Register ONT
+              </Button>
+            </DialogTrigger>
           <DialogContent className="bg-slate-800 text-white border-slate-700">
             <DialogHeader>
               <DialogTitle>Register ONT Baru</DialogTitle>
