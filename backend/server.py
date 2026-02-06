@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,10 +6,13 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone
-
+import configparser
+import asyncio
+import telnetlib3
+import json
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -20,51 +23,652 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # Create the main app without a prefix
-app = FastAPI()
+app = FastAPI(title="Huawei OLT Management System")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# WebSocket connections manager
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: str):
+        for connection in self.active_connections:
+            try:
+                await connection.send_text(message)
+            except:
+                pass
+
+manager = ConnectionManager()
+
+# ==================== MODELS ====================
+
+class OLTDevice(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
+    name: str
+    ip_address: str
+    port: int = 23
+    username: str
+    password: str
+    identifier: str = ""
+    is_connected: bool = False
+    last_connected: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class OLTDeviceCreate(BaseModel):
+    name: str
+    ip_address: str
+    port: int = 23
+    username: str
+    password: str
+    identifier: str = ""
+
+class OLTConfiguration(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    device_id: str
+    
+    # Basic Configuration
+    frame: int = 0
+    board: int = 1
+    port: int = 3
+    service_board: str = "0/1"
+    
+    # Templates
+    g_line_template: int = 1
+    g_service_template: int = 1
+    e_line_template: int = 2
+    e_service_template: int = 2
+    
+    # VLAN Configuration
+    service_outer_vlan: int = 41
+    service_inner_vlan: int = 41
+    vod_outer_vlan: int = 42
+    vod_inner_vlan: int = 42
+    multicast_vlan: int = 69
+    
+    # Increment/Decrement
+    increment_value: int = 100
+    decrement_value: int = 100
+    
+    # Registration
+    start_number: int = 0
+    registration_rule: str = "0-(B)-(P)-(O)"
+    gemport: str = "1,2,3"
+    period: float = 1.0
+    
+    # Advanced Settings
+    enable_log: bool = True
+    auto_reconnect: bool = True
+    special_system_support: bool = False
+    auto_registration: bool = True
+    enable_iptv: bool = False
+    auto_migration: bool = True
+    
+    # Command Templates
+    gpon_default: str = ""
+    gpon_service_flow: str = ""
+    epon_default: str = ""
+    epon_service_flow: str = ""
+    btv_service: str = ""
+    
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class OLTConfigurationCreate(BaseModel):
+    device_id: str
+    frame: int = 0
+    board: int = 1
+    port: int = 3
+    service_board: str = "0/1"
+    g_line_template: int = 1
+    g_service_template: int = 1
+    e_line_template: int = 2
+    e_service_template: int = 2
+    service_outer_vlan: int = 41
+    service_inner_vlan: int = 41
+    vod_outer_vlan: int = 42
+    vod_inner_vlan: int = 42
+    multicast_vlan: int = 69
+    increment_value: int = 100
+    decrement_value: int = 100
+    start_number: int = 0
+    registration_rule: str = "0-(B)-(P)-(O)"
+    gemport: str = "1,2,3"
+    period: float = 1.0
+    enable_log: bool = True
+    auto_reconnect: bool = True
+    special_system_support: bool = False
+    auto_registration: bool = True
+    enable_iptv: bool = False
+    auto_migration: bool = True
+    gpon_default: str = ""
+    gpon_service_flow: str = ""
+    epon_default: str = ""
+    epon_service_flow: str = ""
+    btv_service: str = ""
+
+class ONTDevice(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    olt_device_id: str
+    ont_id: int
+    serial_number: str
+    registration_code: str
+    status: str = "registered"  # registered, online, offline
+    frame: int
+    board: int
+    port: int
+    vlan: int
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ONTDeviceCreate(BaseModel):
+    olt_device_id: str
+    ont_id: int
+    serial_number: str
+    frame: int
+    board: int
+    port: int
+    vlan: int
+
+class CommandLog(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    device_id: str
+    command: str
+    response: str
+    status: str  # success, error
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class TelnetCommand(BaseModel):
+    device_id: str
+    command: str
 
-# Add your routes to the router instead of directly to app
+class ConfigFileUpload(BaseModel):
+    device_id: str
+    config_content: str
+
+# ==================== TELNET CONNECTION ====================
+
+class TelnetConnection:
+    def __init__(self):
+        self.connections: Dict[str, Any] = {}
+    
+    async def connect(self, device_id: str, host: str, port: int, username: str, password: str):
+        try:
+            reader, writer = await telnetlib3.open_connection(host, port, connect_minwait=2.0)
+            
+            # Wait for login prompt
+            await asyncio.sleep(1)
+            output = await asyncio.wait_for(reader.read(1024), timeout=5.0)
+            
+            # Send username
+            writer.write(username + '\n')
+            await asyncio.sleep(0.5)
+            
+            # Wait for password prompt
+            output = await asyncio.wait_for(reader.read(1024), timeout=5.0)
+            
+            # Send password
+            writer.write(password + '\n')
+            await asyncio.sleep(1)
+            
+            # Read welcome message
+            output = await asyncio.wait_for(reader.read(2048), timeout=5.0)
+            
+            self.connections[device_id] = {'reader': reader, 'writer': writer}
+            
+            # Update device connection status
+            await db.olt_devices.update_one(
+                {"id": device_id},
+                {"$set": {"is_connected": True, "last_connected": datetime.now(timezone.utc).isoformat()}}
+            )
+            
+            return True, "Connected successfully"
+        except Exception as e:
+            return False, str(e)
+    
+    async def disconnect(self, device_id: str):
+        if device_id in self.connections:
+            writer = self.connections[device_id]['writer']
+            writer.close()
+            await writer.wait_closed()
+            del self.connections[device_id]
+            
+            # Update device connection status
+            await db.olt_devices.update_one(
+                {"id": device_id},
+                {"$set": {"is_connected": False}}
+            )
+    
+    async def send_command(self, device_id: str, command: str):
+        if device_id not in self.connections:
+            return False, "Not connected", ""
+        
+        try:
+            reader = self.connections[device_id]['reader']
+            writer = self.connections[device_id]['writer']
+            
+            # Send command
+            writer.write(command + '\n')
+            await asyncio.sleep(0.5)
+            
+            # Read response
+            response = ""
+            try:
+                output = await asyncio.wait_for(reader.read(4096), timeout=10.0)
+                response = output
+            except asyncio.TimeoutError:
+                response = "Command executed (timeout waiting for response)"
+            
+            return True, "success", response
+        except Exception as e:
+            return False, "error", str(e)
+    
+    def is_connected(self, device_id: str):
+        return device_id in self.connections
+
+telnet_manager = TelnetConnection()
+
+# ==================== API ROUTES ====================
+
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Huawei OLT Management System API", "version": "1.0.0"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
+# ==================== OLT DEVICES ====================
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
+@api_router.post("/devices", response_model=OLTDevice)
+async def create_device(input: OLTDeviceCreate):
+    device_dict = input.model_dump()
+    device_obj = OLTDevice(**device_dict)
     
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
+    doc = device_obj.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    if doc.get('last_connected'):
+        doc['last_connected'] = doc['last_connected'].isoformat()
     
-    return status_checks
+    await db.olt_devices.insert_one(doc)
+    return device_obj
+
+@api_router.get("/devices", response_model=List[OLTDevice])
+async def get_devices():
+    devices = await db.olt_devices.find({}, {"_id": 0}).to_list(1000)
+    
+    for device in devices:
+        if isinstance(device.get('created_at'), str):
+            device['created_at'] = datetime.fromisoformat(device['created_at'])
+        if device.get('last_connected') and isinstance(device['last_connected'], str):
+            device['last_connected'] = datetime.fromisoformat(device['last_connected'])
+    
+    return devices
+
+@api_router.get("/devices/{device_id}", response_model=OLTDevice)
+async def get_device(device_id: str):
+    device = await db.olt_devices.find_one({"id": device_id}, {"_id": 0})
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    if isinstance(device.get('created_at'), str):
+        device['created_at'] = datetime.fromisoformat(device['created_at'])
+    if device.get('last_connected') and isinstance(device['last_connected'], str):
+        device['last_connected'] = datetime.fromisoformat(device['last_connected'])
+    
+    return device
+
+@api_router.put("/devices/{device_id}", response_model=OLTDevice)
+async def update_device(device_id: str, input: OLTDeviceCreate):
+    device = await db.olt_devices.find_one({"id": device_id})
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    update_data = input.model_dump()
+    await db.olt_devices.update_one({"id": device_id}, {"$set": update_data})
+    
+    updated_device = await db.olt_devices.find_one({"id": device_id}, {"_id": 0})
+    if isinstance(updated_device.get('created_at'), str):
+        updated_device['created_at'] = datetime.fromisoformat(updated_device['created_at'])
+    if updated_device.get('last_connected') and isinstance(updated_device['last_connected'], str):
+        updated_device['last_connected'] = datetime.fromisoformat(updated_device['last_connected'])
+    
+    return updated_device
+
+@api_router.delete("/devices/{device_id}")
+async def delete_device(device_id: str):
+    result = await db.olt_devices.delete_one({"id": device_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    # Also delete related configurations
+    await db.olt_configurations.delete_many({"device_id": device_id})
+    await db.ont_devices.delete_many({"olt_device_id": device_id})
+    await db.command_logs.delete_many({"device_id": device_id})
+    
+    return {"message": "Device deleted successfully"}
+
+# ==================== TELNET CONNECTION ====================
+
+@api_router.post("/devices/{device_id}/connect")
+async def connect_device(device_id: str):
+    device = await db.olt_devices.find_one({"id": device_id}, {"_id": 0})
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    success, message = await telnet_manager.connect(
+        device_id,
+        device['ip_address'],
+        device['port'],
+        device['username'],
+        device['password']
+    )
+    
+    if success:
+        await manager.broadcast(json.dumps({
+            "type": "connection",
+            "device_id": device_id,
+            "status": "connected",
+            "message": message
+        }))
+    
+    return {"success": success, "message": message}
+
+@api_router.post("/devices/{device_id}/disconnect")
+async def disconnect_device(device_id: str):
+    await telnet_manager.disconnect(device_id)
+    
+    await manager.broadcast(json.dumps({
+        "type": "connection",
+        "device_id": device_id,
+        "status": "disconnected"
+    }))
+    
+    return {"message": "Disconnected successfully"}
+
+@api_router.get("/devices/{device_id}/status")
+async def get_connection_status(device_id: str):
+    is_connected = telnet_manager.is_connected(device_id)
+    return {"device_id": device_id, "is_connected": is_connected}
+
+@api_router.post("/devices/command")
+async def send_command(input: TelnetCommand):
+    success, status, response = await telnet_manager.send_command(input.device_id, input.command)
+    
+    # Log command
+    log_dict = {
+        "id": str(uuid.uuid4()),
+        "device_id": input.device_id,
+        "command": input.command,
+        "response": response,
+        "status": status,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    await db.command_logs.insert_one(log_dict)
+    
+    # Broadcast to WebSocket
+    await manager.broadcast(json.dumps({
+        "type": "command",
+        "device_id": input.device_id,
+        "command": input.command,
+        "response": response,
+        "status": status
+    }))
+    
+    return {"success": success, "status": status, "response": response}
+
+# ==================== CONFIGURATIONS ====================
+
+@api_router.post("/configurations", response_model=OLTConfiguration)
+async def create_configuration(input: OLTConfigurationCreate):
+    config_dict = input.model_dump()
+    config_obj = OLTConfiguration(**config_dict)
+    
+    doc = config_obj.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    doc['updated_at'] = doc['updated_at'].isoformat()
+    
+    await db.olt_configurations.insert_one(doc)
+    return config_obj
+
+@api_router.get("/configurations", response_model=List[OLTConfiguration])
+async def get_configurations():
+    configs = await db.olt_configurations.find({}, {"_id": 0}).to_list(1000)
+    
+    for config in configs:
+        if isinstance(config.get('created_at'), str):
+            config['created_at'] = datetime.fromisoformat(config['created_at'])
+        if isinstance(config.get('updated_at'), str):
+            config['updated_at'] = datetime.fromisoformat(config['updated_at'])
+    
+    return configs
+
+@api_router.get("/configurations/device/{device_id}", response_model=OLTConfiguration)
+async def get_configuration_by_device(device_id: str):
+    config = await db.olt_configurations.find_one({"device_id": device_id}, {"_id": 0})
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuration not found")
+    
+    if isinstance(config.get('created_at'), str):
+        config['created_at'] = datetime.fromisoformat(config['created_at'])
+    if isinstance(config.get('updated_at'), str):
+        config['updated_at'] = datetime.fromisoformat(config['updated_at'])
+    
+    return config
+
+@api_router.put("/configurations/{config_id}", response_model=OLTConfiguration)
+async def update_configuration(config_id: str, input: OLTConfigurationCreate):
+    config = await db.olt_configurations.find_one({"id": config_id})
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuration not found")
+    
+    update_data = input.model_dump()
+    update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
+    
+    await db.olt_configurations.update_one({"id": config_id}, {"$set": update_data})
+    
+    updated_config = await db.olt_configurations.find_one({"id": config_id}, {"_id": 0})
+    if isinstance(updated_config.get('created_at'), str):
+        updated_config['created_at'] = datetime.fromisoformat(updated_config['created_at'])
+    if isinstance(updated_config.get('updated_at'), str):
+        updated_config['updated_at'] = datetime.fromisoformat(updated_config['updated_at'])
+    
+    return updated_config
+
+@api_router.delete("/configurations/{config_id}")
+async def delete_configuration(config_id: str):
+    result = await db.olt_configurations.delete_one({"id": config_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Configuration not found")
+    return {"message": "Configuration deleted successfully"}
+
+# ==================== ONT DEVICES ====================
+
+@api_router.post("/ont", response_model=ONTDevice)
+async def create_ont(input: ONTDeviceCreate):
+    # Generate registration code
+    device = await db.olt_devices.find_one({"id": input.olt_device_id})
+    if not device:
+        raise HTTPException(status_code=404, detail="OLT Device not found")
+    
+    config = await db.olt_configurations.find_one({"device_id": input.olt_device_id})
+    
+    registration_rule = config.get('registration_rule', '0-(B)-(P)-(O)') if config else '0-(B)-(P)-(O)'
+    registration_code = registration_rule.replace('(B)', str(input.board)).replace('(P)', str(input.port)).replace('(O)', str(input.ont_id))
+    
+    ont_dict = input.model_dump()
+    ont_dict['registration_code'] = registration_code
+    ont_obj = ONTDevice(**ont_dict)
+    
+    doc = ont_obj.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    
+    await db.ont_devices.insert_one(doc)
+    return ont_obj
+
+@api_router.get("/ont", response_model=List[ONTDevice])
+async def get_ont_devices():
+    onts = await db.ont_devices.find({}, {"_id": 0}).to_list(1000)
+    
+    for ont in onts:
+        if isinstance(ont.get('created_at'), str):
+            ont['created_at'] = datetime.fromisoformat(ont['created_at'])
+    
+    return onts
+
+@api_router.get("/ont/device/{device_id}", response_model=List[ONTDevice])
+async def get_ont_by_device(device_id: str):
+    onts = await db.ont_devices.find({"olt_device_id": device_id}, {"_id": 0}).to_list(1000)
+    
+    for ont in onts:
+        if isinstance(ont.get('created_at'), str):
+            ont['created_at'] = datetime.fromisoformat(ont['created_at'])
+    
+    return onts
+
+@api_router.delete("/ont/{ont_id}")
+async def delete_ont(ont_id: str):
+    result = await db.ont_devices.delete_one({"id": ont_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="ONT not found")
+    return {"message": "ONT deleted successfully"}
+
+# ==================== COMMAND LOGS ====================
+
+@api_router.get("/logs/{device_id}")
+async def get_logs(device_id: str, limit: int = 100):
+    logs = await db.command_logs.find({"device_id": device_id}, {"_id": 0}).sort("timestamp", -1).limit(limit).to_list(limit)
+    
+    for log in logs:
+        if isinstance(log.get('timestamp'), str):
+            log['timestamp'] = datetime.fromisoformat(log['timestamp'])
+    
+    return logs
+
+@api_router.delete("/logs/{device_id}")
+async def clear_logs(device_id: str):
+    await db.command_logs.delete_many({"device_id": device_id})
+    return {"message": "Logs cleared successfully"}
+
+# ==================== CONFIG FILE IMPORT/EXPORT ====================
+
+@api_router.post("/config/import")
+async def import_config(input: ConfigFileUpload):
+    try:
+        # Parse INI content
+        config = configparser.ConfigParser()
+        config.read_string(input.config_content)
+        
+        # Extract OLT section
+        if 'OLT' in config:
+            olt_section = config['OLT']
+            device_data = {
+                "ip_address": olt_section.get('IP地址', olt_section.get('ip_address', '')),
+                "port": int(olt_section.get('端口', olt_section.get('port', '23'))),
+                "username": olt_section.get('帐号', olt_section.get('username', '')),
+                "password": olt_section.get('密码', olt_section.get('password', '')),
+            }
+            
+            await db.olt_devices.update_one(
+                {"id": input.device_id},
+                {"$set": device_data}
+            )
+        
+        # Extract Basic section
+        if '基本' in config or 'Basic' in config:
+            basic_section = config.get('基本', config.get('Basic', {}))
+            config_data = {
+                "frame": int(basic_section.get('框', basic_section.get('frame', '0'))),
+                "board": int(basic_section.get('板', basic_section.get('board', '1'))),
+                "port": int(basic_section.get('端口', basic_section.get('port', '3'))),
+                "service_board": basic_section.get('业务板', basic_section.get('service_board', '0/1')),
+                "g_line_template": int(basic_section.get('G线路模板', basic_section.get('g_line_template', '1'))),
+                "g_service_template": int(basic_section.get('G业务模板', basic_section.get('g_service_template', '1'))),
+                "service_outer_vlan": int(basic_section.get('业务外层', basic_section.get('service_outer_vlan', '41'))),
+                "service_inner_vlan": int(basic_section.get('业务内层', basic_section.get('service_inner_vlan', '41'))),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db.olt_configurations.update_one(
+                {"device_id": input.device_id},
+                {"$set": config_data}
+            )
+        
+        return {"success": True, "message": "Configuration imported successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to import config: {str(e)}")
+
+@api_router.get("/config/export/{device_id}")
+async def export_config(device_id: str):
+    device = await db.olt_devices.find_one({"id": device_id}, {"_id": 0})
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    
+    config = await db.olt_configurations.find_one({"device_id": device_id}, {"_id": 0})
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuration not found")
+    
+    # Generate INI format
+    ini_config = configparser.ConfigParser()
+    
+    ini_config['OLT'] = {
+        'ip_address': device['ip_address'],
+        'port': str(device['port']),
+        'username': device['username'],
+        'password': device['password'],
+        'identifier': device.get('identifier', ''),
+        'enable_log': 'true' if config.get('enable_log', True) else 'false',
+        'auto_reconnect': 'true' if config.get('auto_reconnect', True) else 'false',
+        'auto_registration': 'true' if config.get('auto_registration', True) else 'false',
+    }
+    
+    ini_config['Basic'] = {
+        'frame': str(config.get('frame', 0)),
+        'board': str(config.get('board', 1)),
+        'port': str(config.get('port', 3)),
+        'service_board': config.get('service_board', '0/1'),
+        'g_line_template': str(config.get('g_line_template', 1)),
+        'g_service_template': str(config.get('g_service_template', 1)),
+        'service_outer_vlan': str(config.get('service_outer_vlan', 41)),
+        'service_inner_vlan': str(config.get('service_inner_vlan', 41)),
+        'vod_outer_vlan': str(config.get('vod_outer_vlan', 42)),
+        'vod_inner_vlan': str(config.get('vod_inner_vlan', 42)),
+        'multicast_vlan': str(config.get('multicast_vlan', 69)),
+        'registration_rule': config.get('registration_rule', '0-(B)-(P)-(O)'),
+        'gemport': config.get('gemport', '1,2,3'),
+    }
+    
+    # Convert to string
+    from io import StringIO
+    output = StringIO()
+    ini_config.write(output)
+    config_content = output.getvalue()
+    
+    return {"config_content": config_content}
+
+# ==================== WEBSOCKET ====================
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Echo back for now
+            await websocket.send_text(f"Received: {data}")
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
 
 # Include the router in the main app
 app.include_router(api_router)
