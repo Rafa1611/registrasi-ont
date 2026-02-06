@@ -399,6 +399,62 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
                     />
                   </div>
                   <div>
+                    <Label htmlFor="board">Board/Slot</Label>
+                    <Input
+                      id="board"
+                      name="board"
+                      type="number"
+                      value={formData.board}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="ont-board-input"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="port">Port</Label>
+                    <Input
+                      id="port"
+                      name="port"
+                      type="number"
+                      value={formData.port}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="ont-port-input"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Description (Opsional)</Label>
+                  <Input
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    placeholder="Nama pelanggan / lokasi"
+                    className="bg-slate-700 border-slate-600 text-white"
+                    data-testid="ont-description-input"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Untuk identifikasi pelanggan</p>
+                </div>
+                
+                <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600" data-testid="submit-ont-btn">
+                  Register ONT
+                </Button>
+                    <Input
+                      id="frame"
+                      name="frame"
+                      type="number"
+                      value={formData.frame}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-slate-700 border-slate-600 text-white"
+                      data-testid="ont-frame-input"
+                    />
+                  </div>
+                  <div>
                     <Label htmlFor="board">Board</Label>
                     <Input
                       id="board"
