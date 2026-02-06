@@ -207,7 +207,7 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
             ) : (
               <>
                 <Search className="w-4 h-4 mr-2" />
-                {selectedDevice?.is_connected ? 'Scan ONT Baru' : '🎬 Simulasi Scan'}
+                Scan ONT Baru
               </>
             )}
           </Button>
