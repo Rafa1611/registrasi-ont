@@ -171,7 +171,7 @@ class ONTDevice(BaseModel):
     frame: int
     board: int
     port: int
-    vlan: int
+    vlan: str = "41"  # Support comma-separated VLANs
     line_profile_id: int = 1
     service_profile_id: int = 1
     gemport: str = "1"
@@ -186,7 +186,7 @@ class ONTDeviceCreate(BaseModel):
     frame: int
     board: int
     port: int
-    vlan: int
+    vlan: str = "41"  # Support comma-separated VLANs
     line_profile_id: int = 1
     service_profile_id: int = 1
     gemport: str = "1"
@@ -599,10 +599,20 @@ async def create_ont(input: ONTDeviceCreate):
             # Save service_port_index to ONT record
             ont_dict['service_port_index'] = service_port_index
             
-            # Create service ports with proper format
-            for idx, gp in enumerate(input.gemport.split(',')):
+            # Parse VLANs (support comma-separated)
+            vlans = [v.strip() for v in input.vlan.split(',')]
+            gemports = [g.strip() for g in input.gemport.split(',')]
+            
+            # If single VLAN but multiple gemports, use same VLAN for all
+            if len(vlans) == 1 and len(gemports) > 1:
+                vlans = vlans * len(gemports)
+            
+            # Create service ports with VLAN mapping
+            for idx, gp in enumerate(gemports):
                 sp_idx = service_port_index + idx
-                sp_cmd = f"service-port {sp_idx} vlan {input.vlan} gpon {input.frame}/{input.board}/{input.port} ont {ont_id} gemport {gp.strip()} multi-service user-vlan {input.vlan} tag-transform translate"
+                vlan_id = vlans[idx] if idx < len(vlans) else vlans[0]
+                
+                sp_cmd = f"service-port {sp_idx} vlan {vlan_id} gpon {input.frame}/{input.board}/{input.port} ont {ont_id} gemport {gp} multi-service user-vlan {vlan_id} tag-transform translate"
                 await telnet_manager.send_command(device_id, sp_cmd)
         except Exception as e:
             print(f"Registration command failed: {e}")
