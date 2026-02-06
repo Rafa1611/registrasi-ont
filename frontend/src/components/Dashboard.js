@@ -181,29 +181,41 @@ const Dashboard = ({ API }) => {
                   onDeviceUpdated={handleDeviceUpdated}
                   selectedDevice={selectedDevice}
                 />
-              </TabsContent>
+              )}
 
-              <TabsContent value="configuration" className="mt-6">
-                <ConfigurationPanel 
-                  API={API}
-                  selectedDevice={selectedDevice}
-                />
-              </TabsContent>
+              {user?.permissions?.configuration && (
+                <TabsContent value="configuration" className="mt-6">
+                  <ConfigurationPanel 
+                    API={API}
+                    selectedDevice={selectedDevice}
+                  />
+                </TabsContent>
+              )}
 
-              <TabsContent value="ont" className="mt-6">
-                <ONTManagement 
-                  API={API}
-                  devices={devices}
-                  selectedDevice={selectedDevice}
-                />
-              </TabsContent>
+              {user?.permissions?.ont_management_view && (
+                <TabsContent value="ont" className="mt-6">
+                  <ONTManagement 
+                    API={API}
+                    devices={devices}
+                    selectedDevice={selectedDevice}
+                  />
+                </TabsContent>
+              )}
 
-              <TabsContent value="terminal" className="mt-6">
-                <TerminalPanel 
-                  API={API}
-                  selectedDevice={selectedDevice}
-                />
-              </TabsContent>
+              {user?.permissions?.terminal && (
+                <TabsContent value="terminal" className="mt-6">
+                  <TerminalPanel 
+                    API={API}
+                    selectedDevice={selectedDevice}
+                  />
+                </TabsContent>
+              )}
+
+              {user?.permissions?.user_management && (
+                <TabsContent value="users" className="mt-6">
+                  <div className="text-white">User Management (Coming soon...)</div>
+                </TabsContent>
+              )}
             </Tabs>
           </CardContent>
         </Card>
