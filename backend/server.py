@@ -326,9 +326,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         )
     return User(**user)
 
-async def require_permission(permission: str):
-    """Dependency to check if user has specific permission"""
-    async def permission_checker(current_user: User = Depends(get_current_user)):
+def require_permission(permission: str):
+    """Dependency factory to check if user has specific permission"""
+    def permission_checker(current_user: User = Depends(get_current_user)):
         if current_user.role == "admin":
             return current_user  # Admins have all permissions
         if not current_user.permissions.get(permission, False):
