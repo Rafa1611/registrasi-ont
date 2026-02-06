@@ -176,6 +176,7 @@ class ONTDevice(BaseModel):
     service_profile_id: int = 1
     gemport: str = "1"
     description: str = ""
+    service_port_index: int = 0  # Starting service-port index
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ONTDeviceCreate(BaseModel):
@@ -190,6 +191,7 @@ class ONTDeviceCreate(BaseModel):
     service_profile_id: int = 1
     gemport: str = "1"
     description: str = ""
+    service_port_index: int = -1  # -1 = auto-generate
 
 class CommandLog(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -586,10 +588,16 @@ async def create_ont(input: ONTDeviceCreate):
                 cmd += f" desc \\\"{input.description}\\\""
             await telnet_manager.send_command(device_id, cmd)
             
-            # Get next service-port index from database
-            # Count existing service ports to determine next index
-            existing_ports = await db.ont_devices.count_documents({})
-            service_port_index = existing_ports + 1
+            # Get service-port index
+            if input.service_port_index == -1:
+                # Auto-generate: count existing service ports
+                existing_ports = await db.ont_devices.count_documents({})
+                service_port_index = existing_ports + 1
+            else:
+                service_port_index = input.service_port_index
+            
+            # Save service_port_index to ONT record
+            ont_dict['service_port_index'] = service_port_index
             
             # Create service ports with proper format
             for idx, gp in enumerate(input.gemport.split(',')):
