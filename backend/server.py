@@ -188,6 +188,7 @@ class ONTDevice(BaseModel):
     gemport: str = "1"
     description: str = ""
     service_port_index: int = 0  # Starting service-port index
+    registered_by: str = ""  # Username of person who registered
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ONTDeviceCreate(BaseModel):
