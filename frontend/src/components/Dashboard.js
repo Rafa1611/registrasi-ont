@@ -6,7 +6,8 @@ import DeviceManagement from './DeviceManagement';
 import ConfigurationPanel from './ConfigurationPanel';
 import ONTManagement from './ONTManagement';
 import TerminalPanel from './TerminalPanel';
-import { Activity, Settings, Server, Terminal, Wifi, LogOut, User } from 'lucide-react';
+import UserManagement from './UserManagement';
+import { Activity, Settings, Server, Terminal, Wifi, LogOut, User, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 
