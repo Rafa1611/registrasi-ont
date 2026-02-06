@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import DeviceManagement from './DeviceManagement';
 import ConfigurationPanel from './ConfigurationPanel';
 import ONTManagement from './ONTManagement';
 import TerminalPanel from './TerminalPanel';
-import { Activity, Settings, Server, Terminal, Wifi } from 'lucide-react';
+import { Activity, Settings, Server, Terminal, Wifi, LogOut, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = ({ API }) => {
   const [devices, setDevices] = useState([]);
