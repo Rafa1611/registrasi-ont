@@ -942,7 +942,43 @@ async def create_ont(input: ONTDeviceCreate, current_user: User = Depends(requir
         except Exception as e:
             print(f"Registration command failed: {e}")
     
-    return ont_obj
+    # Get optical info after registration
+    optical_info = None
+    if telnet_manager.is_connected(input.olt_device_id):
+        try:
+            # Execute command: display ont optical-info <ont-id> <board>
+            optical_cmd = f"display ont optical-info {ont_id} {input.board}"
+            print(f"\n📡 Getting optical info: {optical_cmd}")
+            
+            optical_output = await telnet_manager.send_command(input.olt_device_id, optical_cmd)
+            
+            # Parse optical power from output
+            rx_power = None
+            if optical_output and "Rx optical power" in optical_output:
+                for line in optical_output.split('\n'):
+                    if "Rx optical power" in line:
+                        # Extract value: "Rx optical power(dBm)           : -2.60"
+                        parts = line.split(':')
+                        if len(parts) > 1:
+                            rx_power = parts[1].strip()
+                            print(f"✅ Rx Optical Power: {rx_power} dBm")
+                            break
+            
+            optical_info = {
+                "rx_power": rx_power,
+                "frame": input.frame,
+                "board": input.board,
+                "port": input.port,
+                "ont_id": ont_id
+            }
+        except Exception as e:
+            print(f"Failed to get optical info: {e}")
+    
+    # Add optical info to response
+    response = ont_obj.model_dump()
+    response['optical_info'] = optical_info
+    
+    return response
 
 @api_router.get("/ont", response_model=List[ONTDevice])
 async def get_ont_devices():
