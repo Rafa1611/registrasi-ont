@@ -583,11 +583,17 @@ async def create_ont(input: ONTDeviceCreate):
     await db.ont_devices.insert_one(doc)
     
     # Execute registration command if connected
+    generated_commands = []
     if telnet_manager.is_connected(input.olt_device_id):
         try:
-            cmd = f"ont add {input.frame}/{input.board}/{input.port} {ont_id} sn-auth \\\"{input.serial_number}\\\" omci ont-lineprofile-id {input.line_profile_id} ont-srvprofile-id {input.service_profile_id}"
+            cmd = f"ont add {input.frame}/{input.board}/{input.port} {ont_id} sn-auth \"{input.serial_number}\" omci ont-lineprofile-id {input.line_profile_id} ont-srvprofile-id {input.service_profile_id}"
             if input.description:
-                cmd += f" desc \\\"{input.description}\\\""
+                cmd += f" desc \"{input.description}\""
+            generated_commands.append(cmd)
+            print(f"\n{'='*80}")
+            print(f"📋 COMMAND 1 - ONT Registration:")
+            print(f"{'='*80}")
+            print(cmd)
             await telnet_manager.send_command(input.olt_device_id, cmd)
             
             # Note: DBA Profile sudah included dalam Line Profile
