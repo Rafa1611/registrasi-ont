@@ -618,7 +618,7 @@ async def create_ont(input: ONTDeviceCreate):
                 vlan_id = vlans[idx] if idx < len(vlans) else vlans[0]
                 
                 sp_cmd = f"service-port {sp_idx} vlan {vlan_id} gpon {input.frame}/{input.board}/{input.port} ont {ont_id} gemport {gp} multi-service user-vlan {vlan_id} tag-transform translate"
-                await telnet_manager.send_command(device_id, sp_cmd)
+                await telnet_manager.send_command(input.olt_device_id, sp_cmd)
         except Exception as e:
             print(f"Registration command failed: {e}")
     
