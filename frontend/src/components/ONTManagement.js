@@ -418,8 +418,12 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
                   <TableHead className="text-slate-300">Serial Number</TableHead>
                   <TableHead className="text-slate-300">Frame/Board/Port</TableHead>
                   <TableHead className="text-slate-300">VLAN</TableHead>
+                  <TableHead className="text-slate-300">Description</TableHead>
+                  <TableHead className="text-slate-300">Registered By</TableHead>
                   <TableHead className="text-slate-300">Status</TableHead>
-                  <TableHead className="text-slate-300">Actions</TableHead>
+                  {hasPermission('ont_management_delete') && (
+                    <TableHead className="text-slate-300">Actions</TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -429,17 +433,21 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
                     <TableCell className="text-slate-300 font-mono text-sm">{ont.serial_number}</TableCell>
                     <TableCell className="text-slate-300">{ont.frame}/{ont.board}/{ont.port}</TableCell>
                     <TableCell className="text-slate-300">{ont.vlan}</TableCell>
+                    <TableCell className="text-slate-400 text-sm">{ont.description || '-'}</TableCell>
+                    <TableCell className="text-blue-400 text-sm">{ont.registered_by || '-'}</TableCell>
                     <TableCell>
-                      <Badge className="bg-yellow-500">
+                      <Badge className="bg-green-500">
                         <Activity className="w-3 h-3 mr-1" />
-                        {ont.status}
+                        Active
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <Button size="sm" variant="outline" className="border-red-600 text-red-500 hover:bg-red-500 hover:text-white" onClick={() => handleDeleteONT(ont.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
+                    {hasPermission('ont_management_delete') && (
+                      <TableCell>
+                        <Button size="sm" variant="outline" className="border-red-600 text-red-500 hover:bg-red-500 hover:text-white" onClick={() => handleDeleteONT(ont.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
