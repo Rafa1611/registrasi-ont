@@ -126,7 +126,7 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
         const data = await response.json();
         setDetectedOnts(data.onts || []);
         setShowDetected(true);
-        toast.success(`${data.simulation ? '🎬 SIMULASI: ' : ''}Terdeteksi ${data.detected_count} ONT baru!`);
+        toast.success(`Terdeteksi ${data.detected_count} ONT baru!`);
       } else {
         toast.error('Gagal scan ONT');
       }
