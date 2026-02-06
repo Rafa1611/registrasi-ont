@@ -296,6 +296,67 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
         </Dialog>
       </div>
 
+      {/* Detected ONTs Section */}
+      {showDetected && detectedOnts.length > 0 && (
+        <Card className="bg-green-900/30 border-green-500">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Search className="w-5 h-5 text-green-400" />
+                  ONT Terdeteksi (Belum Terdaftar)
+                </CardTitle>
+                <CardDescription className="text-green-200">
+                  {detectedOnts.length} ONT baru ditemukan
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-green-500 text-green-400 hover:bg-green-500 hover:text-white"
+                onClick={() => setShowDetected(false)}
+              >
+                Tutup
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-green-700">
+                    <TableHead className="text-green-300">Serial Number</TableHead>
+                    <TableHead className="text-green-300">Frame/Board/Port</TableHead>
+                    <TableHead className="text-green-300">ONT ID</TableHead>
+                    <TableHead className="text-green-300">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {detectedOnts.map((ont, index) => (
+                    <TableRow key={index} className="border-green-700">
+                      <TableCell className="text-white font-mono text-sm">{ont.serial_number}</TableCell>
+                      <TableCell className="text-green-200">{ont.frame}/{ont.board}/{ont.port}</TableCell>
+                      <TableCell className="text-green-200">{ont.ont_id}</TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          className="bg-green-500 hover:bg-green-600"
+                          onClick={() => handleAutoRegister(ont)}
+                          data-testid={`auto-register-${index}`}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Register
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
           <CardTitle className="text-white">Registered ONTs</CardTitle>
