@@ -21,6 +21,8 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
   const [isDescDialogOpen, setIsDescDialogOpen] = useState(false);
   const [selectedOntForDesc, setSelectedOntForDesc] = useState(null);
   const [tempDescription, setTempDescription] = useState('');
+  const [registrationResult, setRegistrationResult] = useState(null);
+  const [isResultDialogOpen, setIsResultDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     olt_device_id: '',
     ont_id: 0,
