@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Activity } from 'lucide-react';
+import { Plus, Trash2, Activity, Search, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ONTManagement = ({ API, devices, selectedDevice }) => {
