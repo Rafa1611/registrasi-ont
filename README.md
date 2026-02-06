@@ -199,14 +199,36 @@ Setelah instalasi, gunakan kredensial berikut untuk login pertama kali:
 - **Motor** - Async MongoDB driver
 - **Telnetlib3** - Async telnet client untuk OLT connection
 - **WebSocket** - Real-time communication
+- **JWT** - JSON Web Tokens untuk authentication
+- **bcrypt** - Password hashing untuk security
 
 ### Frontend
 - **React 19** - Modern UI framework
+- **React Router** - Navigation & routing
 - **Tailwind CSS** - Utility-first CSS
 - **shadcn/ui** - Beautiful UI components
 - **Lucide Icons** - Modern icon library
 - **Sonner** - Toast notifications
 - **Axios** - HTTP client
+
+## 👥 User Roles & Permissions
+
+### Admin
+Admin memiliki akses penuh ke semua fitur:
+- ✅ View, Register, Edit, Delete ONT
+- ✅ Manage Devices & Configuration
+- ✅ Access Terminal
+- ✅ Manage Users (Create, Edit, Delete)
+- ✅ Full system access
+
+### Operator
+Operator memiliki akses terbatas:
+- ✅ View ONT data
+- ✅ Register ONT baru (Manual & Auto)
+- ❌ Tidak bisa Edit/Delete ONT
+- ❌ Tidak bisa akses Configuration
+- ❌ Tidak bisa akses Terminal
+- ❌ Tidak bisa akses User Management
 
 ## 🚀 Penggunaan
 
