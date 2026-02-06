@@ -205,6 +205,57 @@ class ONTDeviceCreate(BaseModel):
     description: str = ""
     service_port_index: int = -1  # -1 = auto-generate
 
+# ==================== USER & AUTH MODELS ====================
+
+class User(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    username: str
+    password_hash: str
+    full_name: str
+    role: str  # "admin" or "operator"
+    permissions: Dict[str, bool] = {
+        "devices": False,
+        "configuration": False,
+        "ont_management_view": False,
+        "ont_management_register": False,
+        "ont_management_edit": False,
+        "ont_management_delete": False,
+        "terminal": False,
+        "user_management": False
+    }
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_by: Optional[str] = None
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    full_name: str
+    role: str
+    permissions: Optional[Dict[str, bool]] = None
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+class UserResponse(BaseModel):
+    id: str
+    username: str
+    full_name: str
+    role: str
+    permissions: Dict[str, bool]
+    is_active: bool
+    created_at: datetime
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserResponse
+
+# ==================== EXISTING MODELS ====================
+
 class CommandLog(BaseModel):
     model_config = ConfigDict(extra="ignore")
     
