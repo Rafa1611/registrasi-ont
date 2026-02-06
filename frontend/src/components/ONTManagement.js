@@ -243,16 +243,55 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
                   <Input name="dba_profile_id" type="number" value={formData.dba_profile_id} onChange={handleInputChange} required className="bg-slate-700 border-slate-600 text-white" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>GEM Port</Label>
-                  <Input name="gemport" value={formData.gemport} onChange={handleInputChange} placeholder="1 atau 1,2,3" required className="bg-slate-700 border-slate-600 text-white" />
-                  <p className="text-xs text-slate-400 mt-1">Comma-separated</p>
-                </div>
-                <div>
-                  <Label>VLAN (Single atau Multiple)</Label>
-                  <Input name="vlan" value={formData.vlan} onChange={handleInputChange} placeholder="41 atau 40,42,50" required className="bg-slate-700 border-slate-600 text-white" />
-                  <p className="text-xs text-slate-400 mt-1">Single: 41 | Multiple: 40,42,50</p>
+              <div className="space-y-4">
+                <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-blue-300 mb-2">📡 Konfigurasi Service & VLAN</h4>
+                  <p className="text-xs text-blue-200 mb-3">
+                    Setiap service (Internet, IPTV, VoIP) membutuhkan GEM Port dan VLAN tersendiri
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-blue-200">GEM Port</Label>
+                      <Input 
+                        name="gemport" 
+                        value={formData.gemport} 
+                        onChange={handleInputChange} 
+                        placeholder="Contoh: 1" 
+                        required 
+                        className="bg-slate-700 border-slate-600 text-white" 
+                      />
+                      <p className="text-xs text-slate-400 mt-1">
+                        • Single: <span className="text-green-400">1</span><br/>
+                        • Multiple: <span className="text-green-400">1,2,3</span> (pisah dengan koma)
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <Label className="text-blue-200">User VLAN</Label>
+                      <Input 
+                        name="vlan" 
+                        value={formData.vlan} 
+                        onChange={handleInputChange} 
+                        placeholder="Contoh: 41" 
+                        required 
+                        className="bg-slate-700 border-slate-600 text-white" 
+                      />
+                      <p className="text-xs text-slate-400 mt-1">
+                        • Single Service: <span className="text-green-400">41</span><br/>
+                        • Multi Service: <span className="text-green-400">41,42,50</span> (sesuai urutan GEM Port)
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 p-3 bg-slate-800/50 rounded border border-slate-700">
+                    <p className="text-xs font-semibold text-yellow-400 mb-1">💡 Contoh Konfigurasi:</p>
+                    <div className="space-y-1 text-xs text-slate-300">
+                      <div>• <span className="text-cyan-400">Internet saja:</span> GEM Port: <code className="text-green-400">1</code>, VLAN: <code className="text-green-400">41</code></div>
+                      <div>• <span className="text-cyan-400">Internet + IPTV:</span> GEM Port: <code className="text-green-400">1,2</code>, VLAN: <code className="text-green-400">41,42</code></div>
+                      <div>• <span className="text-cyan-400">Internet + IPTV + VoIP:</span> GEM Port: <code className="text-green-400">1,2,3</code>, VLAN: <code className="text-green-400">41,42,50</code></div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
