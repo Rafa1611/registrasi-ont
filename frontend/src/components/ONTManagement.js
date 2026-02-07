@@ -125,9 +125,7 @@ const ONTManagement = ({ API, devices, selectedDevice }) => {
     }
     setIsScanning(true);
     try {
-      const endpoint = selectedDevice.is_connected 
-        ? `${API}/ont/detect/${selectedDevice.id}`
-        : `${API}/ont/simulate-detect/${selectedDevice.id}`;
+      const endpoint = `${API}/ont/detect/${selectedDevice.id}`;
       
       const response = await fetch(endpoint, { method: 'POST' });
       if (response.ok) {
