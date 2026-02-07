@@ -1040,29 +1040,60 @@ async def detect_unauthorized_onts(device_id: str):
         if not success:
             raise HTTPException(status_code=500, detail="Failed to detect ONTs")
         
-        # Parse response to extract ONT information
-        # This is a simplified parser - actual parsing depends on OLT response format
+        # Parse response to extract ONT information for Huawei MA5683T format
         detected_onts = []
         lines = response.split('\n')
         
+        current_ont = {}
         for line in lines:
-            # Example line format: "0/1/3      1    HWTC12345678    ..."
-            # This parsing logic should be adjusted based on actual OLT response
-            parts = line.strip().split()
-            if len(parts) >= 3 and '/' in parts[0]:
-                try:
-                    fsp = parts[0].split('/')  # Frame/Slot/Port
+            line = line.strip()
+            
+            # Check for F/S/P line
+            if 'F/S/P' in line and ':' in line:
+                fsp_value = line.split(':', 1)[1].strip()
+                if '/' in fsp_value:
+                    fsp = fsp_value.split('/')
                     if len(fsp) == 3:
-                        detected_onts.append({
-                            "serial_number": parts[2] if len(parts) > 2 else "UNKNOWN",
-                            "frame": int(fsp[0]),
-                            "board": int(fsp[1]),
-                            "port": int(fsp[2]),
-                            "ont_id": int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0,
-                            "detected_at": datetime.now(timezone.utc).isoformat()
-                        })
-                except (ValueError, IndexError):
-                    continue
+                        try:
+                            current_ont['frame'] = int(fsp[0])
+                            current_ont['board'] = int(fsp[1])
+                            current_ont['port'] = int(fsp[2])
+                        except ValueError:
+                            pass
+            
+            # Check for Serial Number line
+            elif 'Ont SN' in line and ':' in line:
+                sn_value = line.split(':', 1)[1].strip()
+                # Extract SN from format: "485754439F3887B1 (HWTC-9F3887B1)"
+                if '(' in sn_value:
+                    sn_readable = sn_value.split('(')[1].split(')')[0]
+                    current_ont['serial_number'] = sn_readable
+                else:
+                    current_ont['serial_number'] = sn_value.split()[0] if sn_value else "UNKNOWN"
+            
+            # Check for VendorID
+            elif 'VendorID' in line and ':' in line:
+                vendor = line.split(':', 1)[1].strip()
+                current_ont['vendor_id'] = vendor
+            
+            # Check for EquipmentID (model)
+            elif 'Ont EquipmentID' in line and ':' in line:
+                model = line.split(':', 1)[1].strip()
+                current_ont['model'] = model
+            
+            # When we hit separator line, save current ONT
+            elif '---' in line and current_ont:
+                if 'serial_number' in current_ont and 'frame' in current_ont:
+                    current_ont['ont_id'] = 0  # Will be assigned during registration
+                    current_ont['detected_at'] = datetime.now(timezone.utc).isoformat()
+                    detected_onts.append(current_ont.copy())
+                current_ont = {}
+        
+        # Add last ONT if exists
+        if current_ont and 'serial_number' in current_ont and 'frame' in current_ont:
+            current_ont['ont_id'] = 0
+            current_ont['detected_at'] = datetime.now(timezone.utc).isoformat()
+            detected_onts.append(current_ont.copy())
         
         return {
             "success": True,
